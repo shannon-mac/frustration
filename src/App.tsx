@@ -16,5 +16,5 @@ export default function App() {
     return <GameSetup onStart={handleStart} />;
   }
 
-  return <GameBoard game={game} onPlayAgain={() => game.startGame(playerCount)} />;
+  return <GameBoard game={game} onPlayAgain={() => game.startGame(0)} />;
 }
