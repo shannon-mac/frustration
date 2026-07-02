@@ -204,6 +204,9 @@
   border-radius: 12px;
   padding: 8px 12px;
   flex-shrink: 0;
+  /* Let the zone grow wider than the board max-width and scroll if needed */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tableLabel {
@@ -218,8 +221,10 @@
 
 .allLaidDown {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;  /* never wrap — widen instead */
   gap: 12px;
+  width: max-content;
+  min-width: 100%;
 }
 
 .playerLaidDown {
