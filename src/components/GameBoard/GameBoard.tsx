@@ -169,8 +169,11 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
   // Show "Lay Down" only if: action phase, not yet laid down this game, not just done it this turn
   const showLayDown      = canAct && !human.laidDown && !laidDownThisTurn && uiMode.type === 'idle';
   // Show "Build on Hand" only if: already laid down from a PREVIOUS turn (not the same turn)
-  const showBuild        = canAct && !!human.laidDown && !laidDownThisTurn && uiMode.type === 'idle';
-  const isBuildMode      = uiMode.type === 'buildingOnHand';
+  // AND the player has more than 1 card — they must keep a card to discard.
+  const canBuild         = canAct && !!human.laidDown && !laidDownThisTurn && human.hand.length > 1;
+  const showBuild        = canBuild && uiMode.type === 'idle';
+  // Also exit build mode automatically if the hand drops to 1 card mid-build
+  const isBuildMode      = uiMode.type === 'buildingOnHand' && human.hand.length > 1;
   const isPendingDiscard = uiMode.type === 'pendingDiscard';
   const pendingDiscardCard = isPendingDiscard
     ? (uiMode as { type: 'pendingDiscard'; card: CardType }).card

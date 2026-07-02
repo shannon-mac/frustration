@@ -45,12 +45,37 @@ export interface UseGameStateReturn {
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
+const STORAGE_KEY = 'frustration_game_state';
+
+function loadState(): typeof initialGameState {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return initialGameState;
+    return JSON.parse(raw);
+  } catch {
+    return initialGameState;
+  }
+}
+
+function saveState(state: typeof initialGameState) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // Storage quota exceeded or unavailable — silently ignore
+  }
+}
+
 export function useGameState(): UseGameStateReturn {
-  const [state, dispatch] = useReducer(gameReducer, initialGameState);
+  const [state, dispatch] = useReducer(gameReducer, undefined, loadState);
   const [buyOffer, setBuyOffer] = useState<BuyOffer | null>(null);
 
   const stateRef = useRef(state);
   stateRef.current = state;
+
+  // Persist state to localStorage whenever it changes
+  useEffect(() => {
+    saveState(state);
+  }, [state]);
 
   // Use a generation counter so stale async loops abort when a new round/turn starts
   const genRef = useRef(0);
