@@ -7,6 +7,8 @@
   max-width: 700px;
   margin: 0 auto;
   box-sizing: border-box;
+  /* Ensure the board itself doesn't scroll past the hand */
+  padding-bottom: 0;
 }
 
 /* ─── Top bar ──────────────────────────────────────────────── */
@@ -313,9 +315,19 @@
 
 /* ─── Hand area ────────────────────────────────────────────── */
 .handArea {
+  position: sticky;
+  bottom: 0;
+  /* Pull it out of the flex gap so it hugs the viewport edge */
   margin-top: auto;
+  margin-left: -8px;
+  margin-right: -8px;
+  padding: 8px 8px 12px;
   border-top: 1px solid rgba(255,255,255,0.07);
-  padding-top: 8px;
+  /* Frosted backing so content scrolling underneath is readable */
+  background: rgba(17, 34, 17, 0.92);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 10;
 }
 
 .handMeta {
