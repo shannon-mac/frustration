@@ -196,9 +196,17 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
         <div className={styles.turnStatus}>
           <span className={isHumanTurn ? styles.myTurn : styles.theirTurn}>{turnLabel}</span>
         </div>
-        <button className={styles.levelsBtn} onClick={() => setShowLevels(true)}>
-          Levels ℹ
-        </button>
+        <div className={styles.topBarRight}>
+          <button className={styles.levelsBtn} onClick={() => setShowLevels(true)}>
+            Levels ℹ
+          </button>
+          <button
+            className={styles.newGameBtn}
+            onClick={() => { if (window.confirm('Start a new game? Your current game will be lost.')) onPlayAgain(); }}
+          >
+            New Game
+          </button>
+        </div>
       </div>
 
       {/* ── Opponents row ────────────────────────────────────── */}

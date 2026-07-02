@@ -58,6 +58,13 @@
   color: rgba(255,255,255,0.45);
 }
 
+.topBarRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 .levelsBtn {
   background: rgba(255,255,255,0.08);
   border: 1px solid rgba(255,255,255,0.18);
@@ -69,9 +76,22 @@
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.15s;
-  flex-shrink: 0;
 }
 .levelsBtn:hover { background: rgba(255,255,255,0.15); }
+
+.newGameBtn {
+  background: rgba(192,57,43,0.18);
+  border: 1px solid rgba(192,57,43,0.45);
+  color: #ff8a80;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.newGameBtn:hover { background: rgba(192,57,43,0.32); }
 
 /* ─── Opponents row ────────────────────────────────────────── */
 /*
