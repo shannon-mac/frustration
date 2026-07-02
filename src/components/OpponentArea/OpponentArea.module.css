@@ -1,0 +1,110 @@
+.area {
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 8px 10px;
+  min-width: 100px;
+  max-width: 180px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.3s, background 0.3s;
+  overflow: hidden; /* prevent card stacks bleeding out */
+  box-sizing: border-box;
+}
+
+.area.active {
+  border-color: #f0c040;
+  background: rgba(240,192,64,0.07);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #e8e8e8;
+  letter-spacing: 0.03em;
+}
+
+.level {
+  font-size: 11px;
+  background: rgba(255,255,255,0.12);
+  color: #aad4ff;
+  padding: 1px 6px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.turnBadge {
+  font-size: 10px;
+  background: #f0c040;
+  color: #1a1a1a;
+  padding: 1px 7px;
+  border-radius: 20px;
+  font-weight: 700;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.handRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.handStack {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.handStack > * {
+  margin-right: -16px;
+  flex-shrink: 0;
+}
+
+.handStack > *:last-child {
+  margin-right: 0;
+}
+
+.handCount {
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+  background: rgba(0,0,0,0.5);
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.laidDownBadge {
+  font-size: 10px;
+  background: rgba(46,204,113,0.18);
+  color: #2ecc71;
+  border: 1px solid rgba(46,204,113,0.35);
+  padding: 1px 6px;
+  border-radius: 20px;
+  font-weight: 800;
+}

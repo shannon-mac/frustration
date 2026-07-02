@@ -1,0 +1,31 @@
+/* Reset */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { height: 100%; }
+
+body {
+  min-height: 100%;
+  background: radial-gradient(ellipse at 30% 20%, #1c5c2e 0%, #14391f 45%, #0d2818 100%);
+  background-attachment: fixed;
+  color: #e8e8e8;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid #f0c040;
+  outline-offset: 2px;
+}

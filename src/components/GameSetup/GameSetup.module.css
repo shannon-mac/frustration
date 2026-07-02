@@ -1,0 +1,135 @@
+.screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.panel {
+  background: rgba(0,0,0,0.4);
+  border: 1.5px solid rgba(255,255,255,0.12);
+  border-radius: 24px;
+  padding: 48px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  max-width: 380px;
+  width: 100%;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logoSuit {
+  font-size: 32px;
+  color: #f0c040;
+  opacity: 0.7;
+}
+
+.title {
+  font-family: 'Georgia', serif;
+  font-size: 42px;
+  font-weight: 900;
+  color: #fff;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: rgba(255,255,255,0.45);
+  margin: -16px 0 0;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sectionLabel {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.5);
+  font-weight: 700;
+  text-align: center;
+}
+
+.countPicker {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.countBtn {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  border: 2px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.countBtn:hover {
+  border-color: rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.12);
+}
+
+.countBtn.active {
+  border-color: #f0c040;
+  background: rgba(240,192,64,0.15);
+  color: #f0c040;
+}
+
+.hint {
+  font-size: 12px;
+  color: rgba(255,255,255,0.35);
+  text-align: center;
+  margin: 0;
+}
+
+.startBtn {
+  width: 100%;
+  padding: 18px;
+  background: #f0c040;
+  color: #1a1a1a;
+  font-size: 18px;
+  font-weight: 900;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  transition: transform 0.1s, filter 0.15s;
+  font-family: 'Georgia', serif;
+}
+
+.startBtn:hover {
+  filter: brightness(1.1);
+  transform: scale(1.02);
+}
+
+.startBtn:active {
+  transform: scale(0.98);
+}
+
+.suits {
+  display: flex;
+  gap: 16px;
+  font-size: 20px;
+  color: rgba(255,255,255,0.2);
+}

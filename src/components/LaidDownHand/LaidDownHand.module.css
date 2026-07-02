@@ -1,0 +1,53 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.combo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1.5px solid transparent;
+}
+
+.run {
+  background: rgba(100, 200, 255, 0.07);
+  border-color: rgba(100, 200, 255, 0.18);
+}
+
+.set {
+  background: rgba(200, 150, 255, 0.07);
+  border-color: rgba(200, 150, 255, 0.18);
+}
+
+.highlighted {
+  border-color: #f0c040 !important;
+  background: rgba(240, 192, 64, 0.1) !important;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.clickable:hover {
+  border-color: rgba(255,255,255,0.5) !important;
+  background: rgba(255,255,255,0.08) !important;
+}
+
+.label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: rgba(255,255,255,0.4);
+}
+
+.cards {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 2px;
+}

@@ -1,0 +1,318 @@
+.board {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  gap: 8px;
+  padding: 8px 8px 0;
+  max-width: 700px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* ─── Top bar ──────────────────────────────────────────────── */
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 2px 0;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.myLevel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 56px;
+}
+
+.myLevelNum {
+  font-size: 30px;
+  font-weight: 900;
+  color: #f0c040;
+  line-height: 1;
+  font-family: 'Georgia', serif;
+}
+
+.myLevelLabel {
+  font-size: 10px;
+  color: rgba(255,255,255,0.45);
+  white-space: nowrap;
+}
+
+.turnStatus {
+  flex: 1;
+  text-align: center;
+  padding: 0 8px;
+}
+
+.myTurn {
+  font-size: 13px;
+  font-weight: 800;
+  color: #f0c040;
+  letter-spacing: 0.02em;
+}
+
+.theirTurn {
+  font-size: 12px;
+  color: rgba(255,255,255,0.45);
+}
+
+.levelsBtn {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.7);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.levelsBtn:hover { background: rgba(255,255,255,0.15); }
+
+/* ─── Opponents row ────────────────────────────────────────── */
+/*
+ * Flex row, wraps if needed, each tile sized to fit content.
+ * No absolute positioning — tiles stay in flow and never overlap.
+ */
+.opponents {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+/* ─── Central piles zone ───────────────────────────────────── */
+/*
+ * Prominently centred. Horizontal layout: deck  |  discard  with buy bar below.
+ */
+.centralZone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+
+/* ─── Buy bar ──────────────────────────────────────────────── */
+.buyBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(240,192,64,0.12);
+  border: 1.5px solid rgba(240,192,64,0.4);
+  border-radius: 12px;
+  padding: 8px 14px;
+  animation: popIn 0.2s ease;
+}
+
+@keyframes popIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.buyInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.buyLabel {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.4);
+  font-weight: 700;
+}
+
+.buyCardName {
+  font-size: 14px;
+  font-weight: 800;
+  color: #f0c040;
+}
+
+.buyBtn {
+  background: #2ecc71;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 900;
+  padding: 10px 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: filter 0.12s, transform 0.1s;
+  font-family: 'Georgia', serif;
+  white-space: nowrap;
+}
+.buyBtn:hover { filter: brightness(1.12); transform: scale(1.04); }
+.buyBtn:active { transform: scale(0.97); }
+
+.buyPassBtn {
+  background: transparent;
+  color: rgba(255,255,255,0.55);
+  border: 1.5px solid rgba(255,255,255,0.2);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s, transform 0.1s;
+  white-space: nowrap;
+}
+.buyPassBtn:hover { color: #fff; border-color: rgba(255,255,255,0.5); transform: scale(1.04); }
+.buyPassBtn:active { transform: scale(0.97); }
+
+.buyTimer {
+  font-size: 13px;
+  opacity: 0.85;
+  background: rgba(0,0,0,0.2);
+  padding: 2px 7px;
+  border-radius: 6px;
+  min-width: 28px;
+  text-align: center;
+}
+
+.buyBlocked {
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  font-style: italic;
+}
+
+/* ─── Table zone ───────────────────────────────────────────── */
+.tableZone {
+  background: rgba(0,0,0,0.22);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 8px 12px;
+  flex-shrink: 0;
+}
+
+.tableLabel {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.3);
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.allLaidDown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.playerLaidDown {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.playerLaidDownName {
+  font-size: 10px;
+  color: rgba(255,255,255,0.35);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+/* ─── Action bar ───────────────────────────────────────────── */
+.actionBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+.actionBtn {
+  padding: 10px 22px;
+  background: #f0c040;
+  color: #1a1a1a;
+  font-size: 14px;
+  font-weight: 900;
+  border: none;
+  border-radius: 22px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: filter 0.12s, transform 0.1s;
+  font-family: 'Georgia', serif;
+  white-space: nowrap;
+}
+.actionBtn:hover { filter: brightness(1.1); transform: scale(1.03); }
+.actionBtn:active { transform: scale(0.97); }
+
+.secondaryBtn {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+.secondaryBtn:hover { background: rgba(255,255,255,0.18); }
+
+.cancelBtn {
+  background: rgba(192,57,43,0.18);
+  color: #ff8a80;
+  border: 1px solid rgba(192,57,43,0.4);
+}
+.cancelBtn:hover { background: rgba(192,57,43,0.32); }
+
+.actionHint {
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+  font-style: italic;
+  text-align: center;
+}
+
+/* ─── Hand area ────────────────────────────────────────────── */
+.handArea {
+  margin-top: auto;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  padding-top: 8px;
+}
+
+.handMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px 4px;
+}
+
+.handCount {
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  font-weight: 600;
+}
+
+.turnHint {
+  font-size: 12px;
+  color: #f0c040;
+  font-weight: 700;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.reviewHint {
+  font-size: 12px;
+  color: #64c8ff;
+  font-weight: 600;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

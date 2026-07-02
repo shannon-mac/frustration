@@ -1,0 +1,53 @@
+.wrapper {
+  width: 100%;
+  overflow-x: auto;
+  padding: 8px 0 16px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.hand {
+  display: flex;
+  flex-direction: row;
+  padding: 0 16px;
+  width: max-content;
+  min-width: 100%;
+  align-items: flex-end;
+}
+
+.cardWrapper {
+  margin-right: -14px;
+  transition: transform 0.12s, margin 0.12s;
+  cursor: grab;
+}
+
+.cardWrapper:last-child {
+  margin-right: 0;
+}
+
+.cardWrapper:hover {
+  margin-right: 4px;
+  z-index: 10;
+  position: relative;
+}
+
+.cardWrapper.dragging {
+  opacity: 0.4;
+  cursor: grabbing;
+}
+
+.cardWrapper.dropTarget {
+  margin-right: 8px;
+  position: relative;
+}
+
+.cardWrapper.dropTarget::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: 0;
+  width: 3px;
+  height: 100%;
+  background: #f0c040;
+  border-radius: 2px;
+  z-index: 20;
+}

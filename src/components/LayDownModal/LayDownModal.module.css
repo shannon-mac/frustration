@@ -1,0 +1,218 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.78);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 900;
+  animation: fadeIn 0.2s ease;
+}
+
+@media (min-height: 600px) {
+  .overlay { align-items: center; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal {
+  background: #112211;
+  border: 2px solid rgba(255,255,255,0.12);
+  border-bottom: none;
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 680px;
+  max-height: 92vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 16px 24px;
+  animation: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (min-height: 600px) {
+  .modal {
+    border: 2px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    max-width: 680px;
+  }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(60px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  font-family: 'Georgia', serif;
+  font-size: 20px;
+  font-weight: 900;
+  color: #f0c040;
+  margin: 0;
+}
+
+.closeBtn {
+  background: rgba(255,255,255,0.08);
+  border: none;
+  color: rgba(255,255,255,0.6);
+  font-size: 18px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.closeBtn:hover { background: rgba(255,255,255,0.15); }
+
+.error {
+  background: rgba(192,57,43,0.2);
+  border: 1px solid #c0392b;
+  color: #ff8a80;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.slots {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.slot {
+  border: 2px dashed rgba(255,255,255,0.2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  min-height: 86px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.slot:hover {
+  border-color: rgba(255,255,255,0.4);
+}
+
+.runSlot {
+  border-color: rgba(100, 200, 255, 0.3);
+  background: rgba(100, 200, 255, 0.04);
+}
+
+.setSlot {
+  border-color: rgba(200, 150, 255, 0.3);
+  background: rgba(200, 150, 255, 0.04);
+}
+
+.slotLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: rgba(255,255,255,0.4);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.slotHint {
+  font-size: 12px;
+  color: rgba(255,255,255,0.2);
+  font-style: italic;
+}
+
+.slotCards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 40px;
+  align-items: center;
+}
+
+.slotCard {
+  cursor: grab;
+}
+
+.slotCard:active { cursor: grabbing; }
+
+.handArea {
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-top: 12px;
+}
+
+.handLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: rgba(255,255,255,0.35);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.handCards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.pending > * {
+  outline: 3px solid #f0c040;
+  border-radius: 8px;
+}
+
+.allAssigned {
+  font-size: 13px;
+  color: #2ecc71;
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.cancelBtn {
+  flex: 0 0 auto;
+  padding: 14px 20px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.6);
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.cancelBtn:hover { background: rgba(255,255,255,0.12); }
+
+.confirmBtn {
+  flex: 1;
+  padding: 14px 20px;
+  background: #f0c040;
+  color: #1a1a1a;
+  font-size: 16px;
+  font-weight: 900;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: filter 0.15s, transform 0.1s;
+  font-family: 'Georgia', serif;
+}
+
+.confirmBtn:hover { filter: brightness(1.1); }
+.confirmBtn:active { transform: scale(0.98); }
