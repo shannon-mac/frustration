@@ -1,23 +1,30 @@
 .wrapper {
   width: 100%;
-  overflow-x: auto;
   padding: 8px 0 16px;
-  -webkit-overflow-scrolling: touch;
+  /* No overflow-x on mobile — cards scale to fit */
 }
 
 .hand {
   display: flex;
   flex-direction: row;
   padding: 0 16px;
-  width: max-content;
-  min-width: 100%;
   align-items: flex-end;
+  /* Allow cards to shrink on small screens */
+  flex-wrap: nowrap;
+  justify-content: center;
 }
 
+/*
+ * Each card wrapper gets a negative right margin to create the fan overlap.
+ * On mobile we use a CSS custom property --card-overlap that is computed via
+ * a small inline style set on the wrapper element in JS, so the hand always
+ * fits within the viewport width.
+ */
 .cardWrapper {
-  margin-right: -14px;
+  margin-right: var(--card-overlap, -14px);
   transition: transform 0.12s, margin 0.12s;
   cursor: grab;
+  flex-shrink: 0;
 }
 
 .cardWrapper:last-child {
@@ -36,7 +43,7 @@
 }
 
 .cardWrapper.dropTarget {
-  margin-right: 8px;
+  margin-right: calc(var(--card-overlap, -14px) + 22px);
   position: relative;
 }
 
@@ -50,4 +57,26 @@
   background: #f0c040;
   border-radius: 2px;
   z-index: 20;
+}
+
+/* On desktop/tablet keep the original scrollable fan */
+@media (min-width: 480px) {
+  .wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .hand {
+    width: max-content;
+    min-width: 100%;
+    justify-content: flex-start;
+  }
+
+  .cardWrapper {
+    margin-right: -14px;
+  }
+
+  .cardWrapper.dropTarget {
+    margin-right: 8px;
+  }
 }

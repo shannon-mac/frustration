@@ -1,20 +1,42 @@
+/* Scale factor applied to each card — 1.45× the base 62×90 card */
+:root {
+  --pile-scale: 1.45;
+  --pile-card-w: calc(62px * var(--pile-scale));   /* ~90px */
+  --pile-card-h: calc(90px * var(--pile-scale));   /* ~130px */
+}
+
 .piles {
   display: flex;
   flex-direction: row;
-  gap: 20px;
+  gap: 36px;
   align-items: flex-start;
   justify-content: center;
+  width: 100%;
+  padding: 8px 0;
 }
 
 .pileWrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
 }
 
+/*
+ * The pile div uses the scaled dimensions as its layout footprint so the
+ * surrounding flow allocates the right space. The inner card is scaled via
+ * transform (transform-origin: top left) which doesn't affect layout, so we
+ * manually set width/height on .pile to compensate.
+ */
 .pile {
   position: relative;
+  width: var(--pile-card-w);
+  height: var(--pile-card-h);
+}
+
+.pile > * {
+  transform: scale(var(--pile-scale));
+  transform-origin: top left;
 }
 
 .pile.clickable {
@@ -22,44 +44,47 @@
 }
 
 .pile.clickable:hover > * {
-  transform: scale(1.06);
+  transform: scale(calc(var(--pile-scale) * 1.05));
+  transition: transform 0.15s ease;
 }
 
 .badge {
   position: absolute;
-  top: -8px;
-  right: -8px;
+  /* Offset relative to the scaled card top-right corner */
+  top: calc(var(--pile-card-h) * -0.08);
+  right: calc(var(--pile-card-w) * -0.1);
   background: #f0c040;
   color: #1a1a1a;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
   border-radius: 50%;
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  z-index: 1;
 }
 
 .label {
-  font-size: 11px;
-  color: rgba(255,255,255,0.45);
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .emptyPile {
-  width: 62px;
-  height: 90px;
-  border-radius: 8px;
+  width: var(--pile-card-w);
+  height: var(--pile-card-h);
+  border-radius: calc(8px * var(--pile-scale));
   border: 2px dashed rgba(255,255,255,0.2);
   display: flex;
   align-items: center;
   justify-content: center;
   color: rgba(255,255,255,0.25);
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .redrawBtn {

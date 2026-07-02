@@ -1,0 +1,20 @@
+- generic [ref=f2e4]:
+  - generic [ref=f2e5]:
+    - generic [ref=f2e6]: ♠
+    - heading "Frustration" [level=1] [ref=f2e7]
+    - generic [ref=f2e8]: ♥
+  - paragraph [ref=f2e9]: The family card game
+  - generic [ref=f2e10]:
+    - generic [ref=f2e11]: Number of computer opponents
+    - generic [ref=f2e12]:
+      - button "2" [ref=f2e13] [cursor=pointer]
+      - button "3" [ref=f2e14] [cursor=pointer]
+      - button "4" [ref=f2e15] [cursor=pointer]
+      - button "5" [ref=f2e16] [cursor=pointer]
+    - paragraph [ref=f2e17]: 4 players total
+  - button "Deal Cards" [ref=f2e18] [cursor=pointer]
+  - generic [ref=f2e19]:
+    - generic [ref=f2e20]: ♣
+    - generic [ref=f2e21]: ♦
+    - generic [ref=f2e22]: ♥
+    - generic [ref=f2e23]: ♠

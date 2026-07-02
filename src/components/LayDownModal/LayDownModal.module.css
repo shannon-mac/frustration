@@ -116,6 +116,12 @@
   background: rgba(200, 150, 255, 0.04);
 }
 
+/* Highlighted while a touch-drag is hovering over this slot */
+.touchDropTarget {
+  border-color: #f0c040 !important;
+  background: rgba(240, 192, 64, 0.12) !important;
+}
+
 .slotLabel {
   font-size: 11px;
   text-transform: uppercase;

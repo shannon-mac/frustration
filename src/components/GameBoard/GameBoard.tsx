@@ -20,6 +20,7 @@ interface GameBoardProps {
 type UIMode =
   | { type: 'review' }
   | { type: 'idle' }
+  | { type: 'pendingDiscard'; card: CardType }
   | { type: 'layDownModal' }
   | { type: 'buildingOnHand'; selectedCard: CardType };
 
@@ -99,6 +100,11 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
     game.discard(card);
   }
 
+  function cancelDiscard() {
+    setSelectedIds(new Set());
+    setUIMode({ type: 'idle' });
+  }
+
   function handleLayDownConfirm(combos: Combo[]) {
     game.layDown(combos);
     setLaidDownThisTurn(true);
@@ -123,12 +129,21 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
       return;
     }
 
-    // In idle: if they have no combo yet they can't discard until they lay down
-    // (or they can discard without laying down — that's valid)
-    // Tapping a card in action phase discards it if no other mode is active
+    // Tapping a card in idle: select it as pending discard (requires confirmation)
     if (uiMode.type === 'idle') {
       if (canDiscard(card)) {
-        handleDiscard(card);
+        setSelectedIds(new Set([card.id]));
+        setUIMode({ type: 'pendingDiscard', card });
+      }
+    }
+
+    // Tapping a different card while one is already pending replaces the selection
+    if (uiMode.type === 'pendingDiscard') {
+      if (canDiscard(card)) {
+        setSelectedIds(new Set([card.id]));
+        setUIMode({ type: 'pendingDiscard', card });
+      } else {
+        cancelDiscard();
       }
     }
   }
@@ -152,10 +167,14 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
   }
 
   // Show "Lay Down" only if: action phase, not yet laid down this game, not just done it this turn
-  const showLayDown  = canAct && !human.laidDown && !laidDownThisTurn && uiMode.type === 'idle';
+  const showLayDown      = canAct && !human.laidDown && !laidDownThisTurn && uiMode.type === 'idle';
   // Show "Build on Hand" only if: already laid down from a PREVIOUS turn (not the same turn)
-  const showBuild    = canAct && !!human.laidDown && !laidDownThisTurn && uiMode.type === 'idle';
-  const isBuildMode  = uiMode.type === 'buildingOnHand';
+  const showBuild        = canAct && !!human.laidDown && !laidDownThisTurn && uiMode.type === 'idle';
+  const isBuildMode      = uiMode.type === 'buildingOnHand';
+  const isPendingDiscard = uiMode.type === 'pendingDiscard';
+  const pendingDiscardCard = isPendingDiscard
+    ? (uiMode as { type: 'pendingDiscard'; card: CardType }).card
+    : null;
   const selectedCard = isBuildMode
     ? (uiMode as { type: 'buildingOnHand'; selectedCard: CardType }).selectedCard
     : null;
@@ -282,6 +301,22 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
             <button
               className={`${styles.actionBtn} ${styles.cancelBtn}`}
               onClick={() => { setUIMode({ type: 'idle' }); setSelectedIds(new Set()); }}
+            >
+              Cancel
+            </button>
+          </>
+        )}
+        {isPendingDiscard && pendingDiscardCard && (
+          <>
+            <button
+              className={styles.actionBtn}
+              onClick={() => handleDiscard(pendingDiscardCard)}
+            >
+              Discard {pendingDiscardCard.rank} ✓
+            </button>
+            <button
+              className={`${styles.actionBtn} ${styles.cancelBtn}`}
+              onClick={cancelDiscard}
             >
               Cancel
             </button>

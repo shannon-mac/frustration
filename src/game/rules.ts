@@ -131,6 +131,51 @@ export function validateLevelCombo(level: number, combos: Combo[]): boolean {
   return true;
 }
 
+/**
+ * Returns the minimum total number of cards required by a level (1-based).
+ * This is the sum of all minimum set and run sizes.
+ */
+export function minCardsForLevel(level: number): number {
+  const def = LEVELS[level - 1];
+  if (!def) return 0;
+  return def.sets.reduce((s, n) => s + n, 0) + def.runs.reduce((s, n) => s + n, 0);
+}
+
+/**
+ * Enforces the "exact lay-down" rule:
+ * When laying down, you may only include the minimum required cards per level,
+ * UNLESS:
+ *   - All cards from the hand are being played (going out immediately), OR
+ *   - Exactly one card remains after laying down AND it is not a wild
+ *     (so the player still has a card to discard).
+ *
+ * @param hand   The player's full hand at the time of laying down.
+ * @param level  The player's current level (1-based).
+ * @param combos The combos being submitted.
+ */
+export function validateLayDownCardCount(hand: Card[], level: number, combos: Combo[]): boolean {
+  const totalSubmitted = combos.reduce((s, c) => s + c.cards.length, 0);
+  const minRequired = minCardsForLevel(level);
+
+  // Exactly the minimum — always fine
+  if (totalSubmitted === minRequired) return true;
+
+  // More than minimum — only allowed under going-out exceptions
+  const remaining = hand.length - totalSubmitted;
+
+  // Going out: hand will be empty after laying down
+  if (remaining === 0) return true;
+
+  // One discard card left: single non-wild card remains
+  if (remaining === 1) {
+    const submittedIds = new Set(combos.flatMap(c => c.cards.map(card => card.id)));
+    const leftover = hand.filter(c => !submittedIds.has(c.id));
+    if (leftover.length === 1 && !leftover[0].isWild) return true;
+  }
+
+  return false;
+}
+
 // ─── Building on laid-down hands ──────────────────────────────────────────────
 
 /**

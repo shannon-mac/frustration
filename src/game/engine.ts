@@ -3,6 +3,7 @@ import {
   canAddToCombo,
   canDiscard,
   replaceWildInCombo,
+  validateLayDownCardCount,
   validateLevelCombo,
 } from './rules';
 import type { Card, Combo, GameAction, GameState, Player } from './types';
@@ -243,6 +244,7 @@ function handleLayDown(state: GameState, playerIndex: number, combos: Combo[]): 
   if (player.laidDown !== null) return state; // already laid down
 
   if (!validateLevelCombo(player.level, combos)) return state;
+  if (!validateLayDownCardCount(player.hand, player.level, combos)) return state;
 
   // Remove all combo cards from the player's hand
   const comboCardIds = new Set(combos.flatMap(c => c.cards.map(card => card.id)));
@@ -294,21 +296,26 @@ function handlePlayOnHand(
   const newCurrentHand = removeCardFromHand(currentPlayer.hand, card.id);
 
   const players = state.players.map((p, i) => {
-    if (i === state.currentPlayerIndex) {
-      // If wild replacement, add displaced wild back to hand
-      const handWithWild =
-        wildToReplace
-          ? [...newCurrentHand, wildToReplace]
-          : newCurrentHand;
-      return { ...p, hand: handWithWild };
-    }
-    if (i === targetPlayerIndex) {
-      const newCombos = targetPlayer.laidDown!.combos.map((c, ci) =>
-        ci === targetComboIndex ? newCombo : c,
-      );
-      return { ...p, laidDown: { combos: newCombos } };
-    }
-    return p;
+    const isCurrentPlayer = i === state.currentPlayerIndex;
+    const isTargetPlayer  = i === targetPlayerIndex;
+
+    if (!isCurrentPlayer && !isTargetPlayer) return p;
+
+    // Build the updated hand (only changes for the current player)
+    const updatedHand = isCurrentPlayer
+      ? (wildToReplace ? [...newCurrentHand, wildToReplace] : newCurrentHand)
+      : p.hand;
+
+    // Build the updated laidDown (only changes for the target player)
+    const updatedLaidDown = isTargetPlayer
+      ? {
+          combos: targetPlayer.laidDown!.combos.map((c, ci) =>
+            ci === targetComboIndex ? newCombo : c,
+          ),
+        }
+      : p.laidDown;
+
+    return { ...p, hand: updatedHand, laidDown: updatedLaidDown };
   });
 
   return { ...state, players };
