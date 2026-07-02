@@ -12,7 +12,7 @@ import type { Card, Combo, GameAction, GameState, Player } from './types';
 
 const PLAYER_NAMES = [
   'Brenda', 'Shannon', 'Ann', 'Leo', 'Bill',
-  'Bob', 'Claire', 'Helen', 'Brian', 'Kathleen', 'Eunice',
+  'Bob', 'Clare', 'Helen', 'Brian', 'Kathleen', 'Eunice',
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
