@@ -394,6 +394,8 @@ export function computeAITurn(state: GameState, playerIndex: number): GameAction
   const simulatedHand = [...player.hand]; // draw will be added by engine
 
   // 2. Lay down phase — if not already laid down, try to lay down level combo
+  let willLayDown = false;
+  let handAfterLayDown = simulatedHand;
   if (player.laidDown === null) {
     const combo = findBestLevelCombo(simulatedHand, player.level);
     if (combo) {
@@ -402,6 +404,11 @@ export function computeAITurn(state: GameState, playerIndex: number): GameAction
         playerIndex,
         combos: combo,
       });
+      willLayDown = true;
+      // Remove the laid-down cards from the simulated hand so the discard
+      // choice is made from the correct remaining cards.
+      const comboCardIds = new Set(combo.flatMap(c => c.cards.map(card => card.id)));
+      handAfterLayDown = simulatedHand.filter(c => !comboCardIds.has(c.id));
     }
   }
 
@@ -447,8 +454,8 @@ export function computeAITurn(state: GameState, playerIndex: number): GameAction
     }
   }
 
-  // 4. Discard phase
-  const discardCard = chooseDiscard(simulatedHand, player.level, player.laidDown !== null);
+  // 4. Discard phase — choose from the hand as it will look after lay-down
+  const discardCard = chooseDiscard(handAfterLayDown, player.level, player.laidDown !== null || willLayDown);
   if (discardCard) {
     actions.push({ type: 'DISCARD', card: discardCard });
   }

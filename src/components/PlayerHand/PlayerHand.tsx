@@ -97,7 +97,13 @@ export function PlayerHand({ cards, selectedIds, onCardClick, onReorder, disable
     setDragIdx(null);
     setDragOverIdx(null);
 
-    if (!hasMoved || toIdx === null || toIdx === fromIdx) return;
+    if (!hasMoved) {
+      // Tap (no movement) — treat as a card click
+      if (toIdx !== null) onCardClick(displayCards[toIdx]);
+      return;
+    }
+
+    if (toIdx === null || toIdx === fromIdx) return;
 
     setLocalOrder(prev => {
       const next = [...prev];
@@ -106,7 +112,7 @@ export function PlayerHand({ cards, selectedIds, onCardClick, onReorder, disable
       onReorder?.(next);
       return next;
     });
-  }, [handlePointerMove, onReorder]);
+  }, [handlePointerMove, onReorder, onCardClick, displayCards]);
 
   function handlePointerDown(e: React.PointerEvent, idx: number) {
     if (!draggable) return;
@@ -144,7 +150,6 @@ export function PlayerHand({ cards, selectedIds, onCardClick, onReorder, disable
             <Card
               card={card}
               selected={selectedIds.has(card.id)}
-              onClick={disabled ? undefined : () => onCardClick(card)}
               dimmed={disabled}
             />
           </div>
