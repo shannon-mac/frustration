@@ -42,17 +42,12 @@
   white-space: nowrap;
 }
 
-.turnStatus {
-  flex: 1;
-  text-align: center;
-  padding: 0 8px;
-}
-
 .myTurn {
   font-size: 13px;
   font-weight: 800;
   color: #f0c040;
   letter-spacing: 0.02em;
+  animation: pulse 1.5s ease-in-out infinite;
 }
 
 .theirTurn {
@@ -364,25 +359,6 @@
 }
 .sortBtn:active {
   transform: scale(0.95);
-}
-
-.handCount {
-  font-size: 11px;
-  color: rgba(255,255,255,0.35);
-  font-weight: 600;
-}
-
-.turnHint {
-  font-size: 12px;
-  color: #f0c040;
-  font-weight: 700;
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-.reviewHint {
-  font-size: 12px;
-  color: #64c8ff;
-  font-weight: 600;
 }
 
 @keyframes pulse {

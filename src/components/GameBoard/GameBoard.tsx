@@ -225,9 +225,6 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
             {human.laidDown ? '✓ laid down' : `Level ${human.level}`}
           </span>
         </div>
-        <div className={styles.turnStatus}>
-          <span className={isHumanTurn ? styles.myTurn : styles.theirTurn}>{turnLabel}</span>
-        </div>
         <div className={styles.topBarRight}>
           <button className={styles.levelsBtn} onClick={() => setShowLevels(true)}>
             Levels ℹ
@@ -373,9 +370,7 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
       {/* ── Human hand ───────────────────────────────────────── */}
       <div className={styles.handArea}>
         <div className={styles.handMeta}>
-          <span className={styles.handCount}>{human.hand.length} cards in hand</span>
-          {canAct && !isReview && <span className={styles.turnHint}>Your turn</span>}
-          {isReview && isHumanTurn && <span className={styles.reviewHint}>Review your hand before acting ↓</span>}
+          <span className={isHumanTurn ? styles.myTurn : styles.theirTurn}>{turnLabel}</span>
           <div className={styles.sortControls}>
             <button className={styles.sortBtn} onClick={sortByRank} title="Sort by rank">
               1→K

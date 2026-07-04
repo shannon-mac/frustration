@@ -145,9 +145,9 @@ function handleStartGame(state: GameState, playerCount: number, humanIndex: numb
     laidDown: null,
   }));
 
-  // Dealer is player 0; first player is player 1
-  const dealerIndex = 0;
-  const firstPlayerIndex = 1 % playerCount;
+  // Dealer is chosen randomly; first player is the next one after the dealer
+  const dealerIndex = Math.floor(Math.random() * playerCount);
+  const firstPlayerIndex = (dealerIndex + 1) % playerCount;
 
   return {
     ...state,
