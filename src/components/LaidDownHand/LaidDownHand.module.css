@@ -48,6 +48,14 @@
 .cards {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
-  gap: 2px;
+  flex-wrap: nowrap;
+}
+
+.cards > * {
+  margin-right: -10px;
+  flex-shrink: 0;
+}
+
+.cards > *:last-child {
+  margin-right: 0;
 }
