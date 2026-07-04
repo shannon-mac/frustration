@@ -8,6 +8,7 @@ interface CardProps {
   onClick?: () => void;
   draggable?: boolean;
   onDragStart?: (e: React.DragEvent) => void;
+  onDragEnd?: (e: React.DragEvent) => void;
   dimmed?: boolean;
   small?: boolean;
 }
@@ -21,7 +22,7 @@ const SUIT_SYMBOL: Record<string, string> = {
 
 const RED_SUITS = new Set(['hearts', 'diamonds']);
 
-export function Card({ card, faceDown, selected, onClick, draggable, onDragStart, dimmed, small }: CardProps) {
+export function Card({ card, faceDown, selected, onClick, draggable, onDragStart, onDragEnd, dimmed, small }: CardProps) {
   if (faceDown) {
     return (
       <div className={`${styles.card} ${styles.faceDown} ${small ? styles.small : ''}`} />
@@ -41,10 +42,12 @@ export function Card({ card, faceDown, selected, onClick, draggable, onDragStart
         dimmed ? styles.dimmed : '',
         small ? styles.small : '',
         onClick ? styles.clickable : '',
+        draggable ? styles.draggable : '',
       ].filter(Boolean).join(' ')}
       onClick={onClick}
       draggable={draggable}
       onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}

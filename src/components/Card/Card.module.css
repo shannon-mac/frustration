@@ -27,6 +27,14 @@
   cursor: pointer;
 }
 
+.card.draggable {
+  cursor: grab;
+}
+
+.card.draggable:active {
+  cursor: grabbing;
+}
+
 .card.clickable:hover {
   transform: translateY(-8px);
   box-shadow: 0 12px 22px rgba(0,0,0,0.5);

@@ -104,17 +104,17 @@ export function PlayerHand({ cards, selectedIds, onCardClick, onReorder, disable
               dragOverIdx === idx && dragIdx !== idx ? styles.dropTarget : '',
             ].filter(Boolean).join(' ')}
             style={{ '--card-overlap': `${overlap}px` } as React.CSSProperties}
-            draggable={draggable && !disabled}
-            onDragStart={e => onDragStart(e, idx)}
             onDragOver={e => onDragOver(e, idx)}
             onDrop={e => onDrop(e, idx)}
-            onDragEnd={onDragEnd}
           >
             <Card
               card={card}
               selected={selectedIds.has(card.id)}
               onClick={disabled ? undefined : () => onCardClick(card)}
               dimmed={disabled}
+              draggable={draggable && !disabled}
+              onDragStart={e => onDragStart(e, idx)}
+              onDragEnd={onDragEnd}
             />
           </div>
         ))}
