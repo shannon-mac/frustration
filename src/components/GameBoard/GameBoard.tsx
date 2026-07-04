@@ -89,12 +89,6 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
   if (!human) return null;
 
   const topDiscard = state.discardPile[0] ?? null;
-  const isReview = uiMode.type === 'review';
-
-  // The engine uses 'action' for both the lay-down/build phase AND discard.
-  // 'draw' = hasn't drawn yet; 'action' = has drawn, can lay down / build / discard.
-  const canDraw = isHumanTurn && state.turnPhase === 'draw' && !isReview;
-  const canAct  = isHumanTurn && state.turnPhase === 'action' && !isReview;
 
   const isFirstPlayerOfRound =
     isHumanTurn &&
@@ -102,7 +96,20 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
     state.discardsThisRound === 0 &&
     state.currentPlayerIndex === (state.dealerIndex + 1) % state.players.length;
 
+  // Auto-skip review when human is first to play in a round — nothing to review yet
+  if (uiMode.type === 'review' && isFirstPlayerOfRound) {
+    setUIMode({ type: 'idle' });
+  }
+
+  const isReview = uiMode.type === 'review';
+
+  // The engine uses 'action' for both the lay-down/build phase AND discard.
+  // 'draw' = hasn't drawn yet; 'action' = has drawn, can lay down / build / discard.
+  const canDraw = isHumanTurn && state.turnPhase === 'draw' && !isReview;
+  const canAct  = isHumanTurn && state.turnPhase === 'action' && !isReview;
+
   const canHumanBuy = !!buyOffer && state.discardsThisRound >= 2;
+  const canCallRummy = !!state.rummyPendingDiscard && state.currentPlayerIndex !== humanPlayerIndex && !!human.laidDown;
   const opponents = state.players.filter((_, i) => i !== humanPlayerIndex);
 
   // ─── Hand sorting ──────────────────────────────────────────────────────────
@@ -215,12 +222,25 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
     : null;
 
   return (
-    <div className={styles.board}>
+    <div className={styles.root}>
+
+      {/* ── Sidebar levels (desktop/iPad) ────────────────────── */}
+      <aside className={styles.sidebar}>
+        <LevelsReference
+          currentLevel={human.level}
+          players={state.players}
+          humanPlayerIndex={humanPlayerIndex}
+          onClose={() => {}}
+          inline
+        />
+      </aside>
+
+      <div className={styles.board}>
 
       {/* ── Top bar ──────────────────────────────────────────── */}
       <div className={styles.topBar}>
         <div className={styles.topBarRight}>
-          <button className={styles.levelsBtn} onClick={() => setShowLevels(true)}>
+          <button className={`${styles.levelsBtn} ${styles.levelsBtnMobile}`} onClick={() => setShowLevels(true)}>
             Levels ℹ
           </button>
           <button
@@ -282,6 +302,19 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
             )}
           </div>
         )}
+        {canCallRummy && (
+          <div className={styles.buyBar}>
+            <div className={styles.buyInfo}>
+              <span className={styles.buyLabel}>Rummy chance</span>
+              <span className={styles.buyCardName}>
+                Call Rummy on {state.rummyPendingDiscard?.rank === '2' ? 'Wild' : `${state.rummyPendingDiscard?.rank} of ${state.rummyPendingDiscard?.suit}`}
+              </span>
+            </div>
+            <button className={styles.buyBtn} onClick={game.callRummy}>
+              Rummy
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ── Laid-down table ──────────────────────────────────── */}
@@ -308,7 +341,7 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
 
       {/* ── Action bar ───────────────────────────────────────── */}
       <div className={styles.actionBar}>
-        {isReview && isHumanTurn && (
+        {isReview && isHumanTurn && !isFirstPlayerOfRound && (
           <button className={styles.actionBtn} onClick={() => setUIMode({ type: 'idle' })}>
             Ready — Start Turn
           </button>
@@ -407,8 +440,14 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
         />
       )}
       {showLevels && (
-        <LevelsReference currentLevel={human.level} onClose={() => setShowLevels(false)} />
+        <LevelsReference
+          currentLevel={human.level}
+          players={state.players}
+          humanPlayerIndex={humanPlayerIndex}
+          onClose={() => setShowLevels(false)}
+        />
       )}
+    </div>
     </div>
   );
 }

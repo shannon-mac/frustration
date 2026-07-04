@@ -37,6 +37,12 @@ export interface Player {
   level: number;
   hand: Card[];
   laidDown: LaidDownHand | null;
+  rummyCalled: boolean;
+}
+
+export interface RummyBlock {
+  discardedCardId: string;
+  blockedPlayerIndex: number;
 }
 
 // ─── Phase Enums ──────────────────────────────────────────────────────────────
@@ -69,6 +75,8 @@ export interface GameState {
    * held over to the next turn — the discard action is blocked until cleared.
    */
   displacedWildPending: boolean;
+  rummyPendingDiscard: Card | null;
+  rummyBlock: RummyBlock | null;
 }
 
 // ─── Game Actions ─────────────────────────────────────────────────────────────
@@ -143,6 +151,10 @@ interface AdvanceTurnAction {
   type: 'ADVANCE_TURN';
 }
 
+interface CallRummyAction {
+  type: 'CALL_RUMMY';
+}
+
 export type GameAction =
   | DrawFromDeckAction
   | DrawFromDiscardAction
@@ -153,4 +165,5 @@ export type GameAction =
   | DiscardAction
   | StartGameAction
   | NextRoundAction
-  | AdvanceTurnAction;
+  | AdvanceTurnAction
+  | CallRummyAction;

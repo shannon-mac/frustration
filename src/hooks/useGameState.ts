@@ -34,9 +34,10 @@ export interface UseGameStateReturn {
   playOnHand: (targetPlayerIndex: number, targetComboIndex: number, card: Card, wildToReplace?: Card) => void;
   discard: (card: Card) => void;
 
-  // Buy decision
+  // Buy / rummy decision
   humanBuy: () => void;
   humanPass: () => void;
+  callRummy: () => void;
 
   // Derived helpers
   isHumanTurn: boolean;
@@ -149,10 +150,16 @@ export function useGameState(): UseGameStateReturn {
   ) => {
     // No buying on the first 2 discards of the round
     if (postDiscardCount < 2) return;
-    const playerCount = stateRef.current.players.length;
+    const s = stateRef.current;
+    const playerCount = s.players.length;
+    // The next player in turn order can just pick up the discard on their own turn —
+    // skip offering them the buy.
+    const nextPlayerIndex = (discardingPlayerIndex + 1) % playerCount;
     for (let offset = 1; offset < playerCount; offset++) {
       if (genRef.current !== gen) return;
       const idx = (discardingPlayerIndex + offset) % playerCount;
+      // Human is next to play — they can draw it naturally, so don't offer a buy
+      if (idx === nextPlayerIndex && s.players[idx]?.isHuman) continue;
       const bought = await offerBuyToPlayer(idx, discardedCard, discardingPlayerIndex, gen);
       if (bought) break;
     }
@@ -286,6 +293,7 @@ export function useGameState(): UseGameStateReturn {
     discard,
     humanBuy,
     humanPass: clearBuyOffer,
+    callRummy: () => dispatch({ type: 'CALL_RUMMY' }),
     isHumanTurn,
     humanPlayerIndex,
   };

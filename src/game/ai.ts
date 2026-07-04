@@ -1,7 +1,7 @@
 import { getHandSizeLimit } from './deck';
 import { LEVELS, RANK_ORDER, canAddToCombo, isValidRun, isValidSet, replaceWildInCombo } from './rules';
 import type { LevelDefinition } from './rules';
-import type { Card, Combo, GameAction, GameState } from './types';
+import type { Card, Combo, GameAction, GameState, Player } from './types';
 
 // ─── Utility ──────────────────────────────────────────────────────────────────
 
@@ -186,6 +186,40 @@ function findBestRunWindow(
 
 // ─── Should AI buy? ───────────────────────────────────────────────────────────
 
+export function canBuildOnHand(
+  state: GameState,
+  card: Card,
+  playerIndex?: number,
+): boolean {
+  for (let index = 0; index < state.players.length; index++) {
+    if (playerIndex !== undefined && index === playerIndex) continue;
+    const player = state.players[index];
+    if (!player.laidDown) continue;
+    for (const combo of player.laidDown.combos) {
+      if (canAddToCombo(combo, card)) return true;
+    }
+  }
+  return false;
+}
+
+function countBuildableCards(hand: Card[], state: GameState, playerIndex: number): number {
+  return hand.filter(card => canBuildOnHand(state, card, playerIndex)).length;
+}
+
+function countPotentialBuildCards(hand: Card[], state: GameState, playerIndex: number): number {
+  return hand.filter(card => canBuildOnHand(state, card, playerIndex) || improvesLevelHand(hand, card, state.players[playerIndex])).length;
+}
+
+function improvesLevelHand(hand: Card[], card: Card, player: Player): boolean {
+  if (player.laidDown) return false;
+  const withCard = [...hand, card];
+  const currentCombo = findBestLevelCombo(hand, player.level);
+  const nextCombo = findBestLevelCombo(withCard, player.level);
+  if (nextCombo && !currentCombo) return true;
+  const def = LEVELS[player.level - 1];
+  return scoreHandProgress(withCard, def) > scoreHandProgress(hand, def);
+}
+
 export function shouldBuy(
   state: GameState,
   playerIndex: number,
@@ -193,47 +227,29 @@ export function shouldBuy(
 ): boolean {
   const player = state.players[playerIndex];
 
-  // Respect hand size limit
-  const limit = getHandSizeLimit(player.level);
-  if (player.hand.length + 2 > limit) return false;
-
-  // Can't buy first 2 discards
-  if (state.discardsThisRound < 2) return false;
-
-  // If already laid down, only buy if the card can be played on a hand
   if (player.laidDown !== null) {
-    return canPlayOnAnyHand(state, playerIndex, discardedCard);
+    return false;
   }
 
-  // Check if this card helps towards the current level combo
-  const def = LEVELS[player.level - 1];
-  const hypotheticalHand = [...player.hand, discardedCard];
+  const limit = getHandSizeLimit(player.level);
+  if (player.hand.length + 2 > limit) return false;
+  if (state.discardsThisRound < 2) return false;
 
-  // Try to build the level combo with this card included
+  const hypotheticalHand = [...player.hand, discardedCard];
   const withCard = findBestLevelCombo(hypotheticalHand, player.level);
   const withoutCard = findBestLevelCombo(player.hand, player.level);
 
-  // If it completes the combo, definitely buy
+  if (withCard && hypotheticalHand.length - withCard.reduce((sum, combo) => sum + combo.cards.length, 0) <= 1) {
+    return true;
+  }
+
   if (withCard && !withoutCard) return true;
 
-  // Score how much progress the card adds
+  const def = LEVELS[player.level - 1];
   const scoreWith = scoreHandProgress(hypotheticalHand, def);
   const scoreWithout = scoreHandProgress(player.hand, def);
+  if (scoreWith > scoreWithout + 1) return true;
 
-  return scoreWith > scoreWithout + 1; // only buy if significantly better
-}
-
-function canPlayOnAnyHand(
-  state: GameState,
-  _playerIndex: number,
-  card: Card,
-): boolean {
-  for (const player of state.players) {
-    if (!player.laidDown) continue;
-    for (const combo of player.laidDown.combos) {
-      if (canAddToCombo(combo, card)) return true;
-    }
-  }
   return false;
 }
 
@@ -301,6 +317,10 @@ export function chooseBuildPlays(
       if (!target.laidDown) continue;
       for (let ci = 0; ci < target.laidDown.combos.length; ci++) {
         const combo = target.laidDown.combos[ci];
+        const isBlockedBuild =
+          state.rummyBlock?.blockedPlayerIndex === playerIndex &&
+          state.rummyBlock.discardedCardId === card.id;
+        if (isBlockedBuild) break;
         // Direct add (no wild displacement)
         if (canAddToCombo(combo, card)) {
           plays.push({ card, targetPlayerIndex: pi, targetComboIndex: ci });
@@ -339,26 +359,40 @@ export function chooseDiscard(
   hand: Card[],
   level: number,
   hasLaidDown: boolean,
+  state?: GameState,
+  playerIndex?: number,
 ): Card | null {
-  // Never discard a wild
   const discardable = hand.filter(c => !c.isWild);
   if (discardable.length === 0) return null;
 
-  if (hasLaidDown) {
-    // Just discard the highest-rank card with fewest duplicates (random tiebreak)
-    return discardable.sort((a, b) => RANK_ORDER[b.rank] - RANK_ORDER[a.rank])[0];
+  if (hasLaidDown && state !== undefined && playerIndex !== undefined) {
+    const scored = discardable.map(card => {
+      const remainingHand = hand.filter(c => c.id !== card.id);
+      return {
+        card,
+        buildableLeft: countBuildableCards(remainingHand, state, playerIndex),
+        rankValue: RANK_ORDER[card.rank],
+      };
+    });
+
+    scored.sort((a, b) => a.buildableLeft - b.buildableLeft || b.rankValue - a.rankValue);
+    return scored[0].card;
   }
 
   const def = LEVELS[level - 1];
-
-  // Score each card by how much it contributes to the level
   const scores = discardable.map(card => {
     const withoutCard = hand.filter(c => c.id !== card.id);
-    return { card, progress: scoreHandProgress(withoutCard, def) };
+    return {
+      card,
+      progress: scoreHandProgress(withoutCard, def),
+      buildPotential: state !== undefined && playerIndex !== undefined
+        ? countPotentialBuildCards(withoutCard, state, playerIndex)
+        : 0,
+      rankValue: RANK_ORDER[card.rank],
+    };
   });
 
-  // Discard the card whose removal hurts the least (or helps most)
-  scores.sort((a, b) => b.progress - a.progress);
+  scores.sort((a, b) => b.progress - a.progress || a.buildPotential - b.buildPotential || b.rankValue - a.rankValue);
   return scores[0].card;
 }
 
@@ -372,52 +406,41 @@ export function computeAITurn(state: GameState, playerIndex: number): GameAction
   const actions: GameAction[] = [];
   const player = state.players[playerIndex];
 
-  // 1. Draw phase — always draw from deck (AI doesn't use discard draw for simplicity)
-  //    Exception: draw from discard if the top card significantly helps
   const topDiscard = state.discardPile[0];
-  if (topDiscard && !topDiscard.isWild) {
-    const hypothetical = [...player.hand, topDiscard];
-    const canCompleteWithDiscard = !!findBestLevelCombo(hypothetical, player.level);
-    const canCompleteWithoutDiscard = !!findBestLevelCombo(player.hand, player.level);
+  const topDiscardBlockedForBuild =
+    !!topDiscard &&
+    state.rummyBlock?.blockedPlayerIndex === playerIndex &&
+    state.rummyBlock.discardedCardId === topDiscard.id;
 
-    if (canCompleteWithDiscard && !canCompleteWithoutDiscard) {
-      actions.push({ type: 'DRAW_FROM_DISCARD' });
-    } else {
-      actions.push({ type: 'DRAW_FROM_DECK' });
-    }
-  } else {
-    actions.push({ type: 'DRAW_FROM_DECK' });
-  }
+  const shouldTakeDiscard = !!topDiscard && !topDiscard.isWild && (
+    (player.laidDown === null && improvesLevelHand(player.hand, topDiscard, player)) ||
+    (player.laidDown !== null && canBuildOnHand(state, topDiscard, playerIndex) && !topDiscardBlockedForBuild)
+  );
 
-  // We need to simulate what the hand will look like after the draw
-  // Use the current hand + anticipated draw card for downstream logic
-  const simulatedHand = [...player.hand]; // draw will be added by engine
+  actions.push({ type: shouldTakeDiscard ? 'DRAW_FROM_DISCARD' : 'DRAW_FROM_DECK' });
 
-  // 2. Lay down phase — if not already laid down, try to lay down level combo
+  const simulatedHand = topDiscard && shouldTakeDiscard ? [...player.hand, topDiscard] : [...player.hand];
+
   let willLayDown = false;
   let handAfterLayDown = simulatedHand;
   if (player.laidDown === null) {
     const combo = findBestLevelCombo(simulatedHand, player.level);
     if (combo) {
-      actions.push({
-        type: 'LAY_DOWN',
-        playerIndex,
-        combos: combo,
-      });
+      actions.push({ type: 'LAY_DOWN', playerIndex, combos: combo });
       willLayDown = true;
-      // Remove the laid-down cards from the simulated hand so the discard
-      // choice is made from the correct remaining cards.
       const comboCardIds = new Set(combo.flatMap(c => c.cards.map(card => card.id)));
       handAfterLayDown = simulatedHand.filter(c => !comboCardIds.has(c.id));
     }
   }
 
-  // 3. Build on hands — play cards onto other players' laid-down combos
-  //    (This is computed at dispatch time since hand state changes after draw)
-  // We add a sentinel action that the hook will resolve after draw
-  // For now, choose plays based on current hand (hook will re-evaluate after draw)
   if (player.laidDown !== null) {
-    const plays = chooseBuildPlays(state, playerIndex);
+    const simulatedState = {
+      ...state,
+      players: state.players.map((entry, index) =>
+        index === playerIndex ? { ...entry, hand: simulatedHand } : entry,
+      ),
+    };
+    const plays = chooseBuildPlays(simulatedState, playerIndex);
     for (const play of plays) {
       actions.push({
         type: 'PLAY_ON_HAND',
@@ -426,36 +449,16 @@ export function computeAITurn(state: GameState, playerIndex: number): GameAction
         card: play.card,
         wildToReplace: play.wildToReplace,
       });
-      // If this play displaces a wild, the next action must place that wild.
-      // chooseBuildPlays guarantees a destination exists; emit a follow-up play
-      // for the displaced wild immediately so the AI satisfies the pending rule.
-      if (play.wildToReplace) {
-        // Find the first eligible spot for the displaced wild
-        const wildCard = play.wildToReplace;
-        for (let pi = 0; pi < state.players.length; pi++) {
-          const target = state.players[pi];
-          if (!target.laidDown) continue;
-          let placed = false;
-          for (let ci = 0; ci < target.laidDown.combos.length; ci++) {
-            if (canAddToCombo(target.laidDown.combos[ci], wildCard)) {
-              actions.push({
-                type: 'PLAY_ON_HAND',
-                targetPlayerIndex: pi,
-                targetComboIndex: ci,
-                card: wildCard,
-              });
-              placed = true;
-              break;
-            }
-          }
-          if (placed) break;
-        }
-      }
     }
   }
 
-  // 4. Discard phase — choose from the hand as it will look after lay-down
-  const discardCard = chooseDiscard(handAfterLayDown, player.level, player.laidDown !== null || willLayDown);
+  const discardCard = chooseDiscard(
+    handAfterLayDown,
+    player.level,
+    player.laidDown !== null || willLayDown,
+    state,
+    playerIndex,
+  );
   if (discardCard) {
     actions.push({ type: 'DISCARD', card: discardCard });
   }

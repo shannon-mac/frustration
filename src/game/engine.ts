@@ -7,6 +7,7 @@ import {
   validateLevelCombo,
 } from './rules';
 import type { Card, Combo, GameAction, GameState, Player } from './types';
+import { canBuildOnHand } from './ai';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -86,6 +87,7 @@ function endRound(state: GameState): GameState {
     level: p.laidDown !== null ? p.level + 1 : p.level,
     hand: hands[i],
     laidDown: null,
+    rummyCalled: false,
   }));
 
   return {
@@ -143,6 +145,7 @@ function handleStartGame(state: GameState, playerCount: number, humanIndex: numb
     level: 1,
     hand: hands[i],
     laidDown: null,
+    rummyCalled: false,
   }));
 
   // Dealer is chosen randomly; first player is the next one after the dealer
@@ -172,7 +175,7 @@ function handleDrawFromDeck(state: GameState): GameState {
   const players = s.players.map((p, i) =>
     i === s.currentPlayerIndex ? { ...p, hand: [...p.hand, card] } : p,
   );
-  return { ...s, deck: remainingDeck, players, turnPhase: 'action' };
+  return { ...s, deck: remainingDeck, players, turnPhase: 'action', rummyPendingDiscard: null, rummyBlock: null };
 }
 
 function handleDrawFromDiscard(state: GameState): GameState {
@@ -181,7 +184,7 @@ function handleDrawFromDiscard(state: GameState): GameState {
   const players = state.players.map((p, i) =>
     i === state.currentPlayerIndex ? { ...p, hand: [...p.hand, card] } : p,
   );
-  return { ...state, discardPile: remainingDiscard, players, turnPhase: 'action' };
+  return { ...state, discardPile: remainingDiscard, players, turnPhase: 'action', rummyPendingDiscard: null, rummyBlock: null };
 }
 
 /**
@@ -206,7 +209,7 @@ function handleFirstPlayerDiscardAndRedraw(state: GameState): GameState {
   const players = s.players.map((p, i) =>
     i === s.currentPlayerIndex ? { ...p, hand: [...p.hand, card] } : p,
   );
-  return { ...s, deck: remainingDeck, players, turnPhase: 'action' };
+  return { ...s, deck: remainingDeck, players, turnPhase: 'action', rummyPendingDiscard: null, rummyBlock: null };
 }
 
 function handleBuy(state: GameState, buyerIndex: number): GameState {
@@ -236,7 +239,7 @@ function handleBuy(state: GameState, buyerIndex: number): GameState {
   // Current player now draws the next card from the (now updated) deck
   s = ensureDeck({ ...s, deck: remainingDeck, players });
 
-  return s;
+  return { ...s, rummyPendingDiscard: null, rummyBlock: null };
 }
 
 function handleLayDown(state: GameState, playerIndex: number, combos: Combo[]): GameState {
@@ -352,12 +355,17 @@ function handleDiscard(state: GameState, card: Card): GameState {
 
   // Stay on the current player in 'discard' phase so the buy window can run
   // before the turn advances.  ADVANCE_TURN finishes the transition.
+  const blockedPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
+  const canBlockImmediateBuild = !!state.players[blockedPlayerIndex]?.laidDown && canBuildOnHand(state, card, state.currentPlayerIndex);
+
   return {
     ...state,
     players,
     discardPile: newDiscardPile,
     discardsThisRound: newDiscardsThisRound,
     turnPhase: 'discard',
+    rummyPendingDiscard: canBlockImmediateBuild ? card : null,
+    rummyBlock: null,
   };
 }
 
@@ -374,7 +382,30 @@ function handleAdvanceTurn(state: GameState): GameState {
     return endRound({ ...state, gamePhase: 'roundEnd' });
   }
 
-  return nextPlayer(state);
+  return nextPlayer({ ...state, rummyPendingDiscard: null, rummyBlock: null });
+}
+
+function handleCallRummy(state: GameState): GameState {
+  const pending = state.rummyPendingDiscard;
+  if (!pending) return state;
+  if (state.turnPhase !== 'discard') return state;
+
+  const callerIndex = state.players.findIndex(player => player.isHuman);
+  const blockedPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
+  if (callerIndex === -1 || callerIndex !== blockedPlayerIndex) return state;
+
+  const players = state.players.map((player, index) =>
+    index === callerIndex ? { ...player, rummyCalled: true } : player,
+  );
+
+  return {
+    ...state,
+    players,
+    rummyBlock: {
+      discardedCardId: pending.id,
+      blockedPlayerIndex,
+    },
+  };
 }
 
 // ─── Reducer ──────────────────────────────────────────────────────────────────
@@ -414,6 +445,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'ADVANCE_TURN':
       return handleAdvanceTurn(state);
 
+    case 'CALL_RUMMY':
+      return handleCallRummy(state);
+
     case 'NEXT_ROUND':
       return endRound(state);
 
@@ -436,4 +470,6 @@ export const initialGameState: GameState = {
   discardsThisRound: 0,
   winner: null,
   displacedWildPending: false,
+  rummyPendingDiscard: null,
+  rummyBlock: null,
 };
