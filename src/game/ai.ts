@@ -1,5 +1,5 @@
 import { getHandSizeLimit } from './deck';
-import { LEVELS, RANK_ORDER, canAddToCombo, isValidRun, isValidSet } from './rules';
+import { LEVELS, RANK_ORDER, canAddToCombo, isValidRun, isValidSet, replaceWildInCombo } from './rules';
 import type { LevelDefinition } from './rules';
 import type { Card, Combo, GameAction, GameState } from './types';
 
@@ -288,22 +288,43 @@ function scoreHandProgress(hand: Card[], def: LevelDefinition): number {
 export function chooseBuildPlays(
   state: GameState,
   playerIndex: number,
-): Array<{ card: Card; targetPlayerIndex: number; targetComboIndex: number }> {
+): Array<{ card: Card; targetPlayerIndex: number; targetComboIndex: number; wildToReplace?: Card }> {
   const player = state.players[playerIndex];
   if (!player.laidDown) return [];
 
-  const plays: Array<{ card: Card; targetPlayerIndex: number; targetComboIndex: number }> = [];
+  const plays: Array<{ card: Card; targetPlayerIndex: number; targetComboIndex: number; wildToReplace?: Card }> = [];
 
   for (const card of player.hand) {
-    if (card.isWild) continue; // save wilds — don't burn them on other hands unless nothing else
+    if (card.isWild) continue; // save wilds for wild-displacement destinations
     for (let pi = 0; pi < state.players.length; pi++) {
       const target = state.players[pi];
       if (!target.laidDown) continue;
       for (let ci = 0; ci < target.laidDown.combos.length; ci++) {
-        if (canAddToCombo(target.laidDown.combos[ci], card)) {
+        const combo = target.laidDown.combos[ci];
+        // Direct add (no wild displacement)
+        if (canAddToCombo(combo, card)) {
           plays.push({ card, targetPlayerIndex: pi, targetComboIndex: ci });
           break; // one play per card
         }
+        // Wild displacement: try replacing each wild in this run/set
+        if (combo.type === 'run') {
+          const wilds = combo.cards.filter(c => c.isWild);
+          for (const wild of wilds) {
+            const result = replaceWildInCombo(combo, card, wild);
+            if (!result) continue;
+            // The displaced wild must have somewhere to go — find a valid destination
+            const wildCard = result.displacedWild;
+            const hasDestination = state.players.some(tp => {
+              if (!tp.laidDown) return false;
+              return tp.laidDown.combos.some(tc => canAddToCombo(tc, wildCard));
+            });
+            if (hasDestination) {
+              plays.push({ card, targetPlayerIndex: pi, targetComboIndex: ci, wildToReplace: wild });
+              break;
+            }
+          }
+        }
+        if (plays.some(p => p.card.id === card.id)) break;
       }
       if (plays.some(p => p.card.id === card.id)) break;
     }
@@ -396,7 +417,33 @@ export function computeAITurn(state: GameState, playerIndex: number): GameAction
         targetPlayerIndex: play.targetPlayerIndex,
         targetComboIndex: play.targetComboIndex,
         card: play.card,
+        wildToReplace: play.wildToReplace,
       });
+      // If this play displaces a wild, the next action must place that wild.
+      // chooseBuildPlays guarantees a destination exists; emit a follow-up play
+      // for the displaced wild immediately so the AI satisfies the pending rule.
+      if (play.wildToReplace) {
+        // Find the first eligible spot for the displaced wild
+        const wildCard = play.wildToReplace;
+        for (let pi = 0; pi < state.players.length; pi++) {
+          const target = state.players[pi];
+          if (!target.laidDown) continue;
+          let placed = false;
+          for (let ci = 0; ci < target.laidDown.combos.length; ci++) {
+            if (canAddToCombo(target.laidDown.combos[ci], wildCard)) {
+              actions.push({
+                type: 'PLAY_ON_HAND',
+                targetPlayerIndex: pi,
+                targetComboIndex: ci,
+                card: wildCard,
+              });
+              placed = true;
+              break;
+            }
+          }
+          if (placed) break;
+        }
+      }
     }
   }
 

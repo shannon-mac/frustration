@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Card as CardType, Combo } from '../../game/types';
-import { canDiscard } from '../../game/rules';
+import { canDiscard, RANK_ORDER } from '../../game/rules';
 import { BUY_WINDOW_MS, type UseGameStateReturn } from '../../hooks/useGameState';
 import { CardPile } from '../CardPile/CardPile';
 import { GameOverScreen } from '../GameOverScreen/GameOverScreen';
@@ -34,6 +34,8 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
   const [prevRound, setPrevRound] = useState(state.roundNumber);
   // Track whether the human just laid down this turn so we can show "Build on Hand"
   const [laidDownThisTurn, setLaidDownThisTurn] = useState(false);
+  // Persisted hand order — user may drag-reorder or sort; new cards are appended
+  const [handOrder, setHandOrder] = useState<CardType[]>([]);
 
   // Buy timer display
   const [buySecondsLeft, setBuySecondsLeft] = useState(0);
@@ -45,6 +47,17 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
     setPrevRound(state.roundNumber);
     setUIMode({ type: 'review' });
     setLaidDownThisTurn(false);
+  }
+
+  // Keep handOrder in sync with the live hand:
+  // cards removed (played/discarded) are dropped; newly drawn/bought cards are appended
+  const humanHand = state.players[humanPlayerIndex]?.hand ?? [];
+  const liveIds = new Set(humanHand.map(c => c.id));
+  const knownIds = new Set(handOrder.map(c => c.id));
+  const newCards = humanHand.filter(c => !knownIds.has(c.id));
+  const filteredOrder = handOrder.filter(c => liveIds.has(c.id));
+  if (newCards.length > 0 || filteredOrder.length !== handOrder.length) {
+    setHandOrder([...filteredOrder, ...newCards]);
   }
 
   // Reset laidDownThisTurn when it's no longer the human's turn
@@ -91,6 +104,25 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
 
   const canHumanBuy = !!buyOffer && state.discardsThisRound >= 2;
   const opponents = state.players.filter((_, i) => i !== humanPlayerIndex);
+
+  // ─── Hand sorting ──────────────────────────────────────────────────────────
+  const SUIT_ORDER: Record<string, number> = { spades: 0, hearts: 1, diamonds: 2, clubs: 3 };
+
+  function sortByRank() {
+    setHandOrder(prev => [...prev].sort((a, b) => {
+      if (a.isWild !== b.isWild) return a.isWild ? 1 : -1;
+      return RANK_ORDER[a.rank] - RANK_ORDER[b.rank];
+    }));
+  }
+
+  function sortBySuit() {
+    setHandOrder(prev => [...prev].sort((a, b) => {
+      if (a.isWild !== b.isWild) return a.isWild ? 1 : -1;
+      const suitDiff = SUIT_ORDER[a.suit] - SUIT_ORDER[b.suit];
+      if (suitDiff !== 0) return suitDiff;
+      return RANK_ORDER[a.rank] - RANK_ORDER[b.rank];
+    }));
+  }
 
   // ─── Actions ───────────────────────────────────────────────────────────────
   function handleDiscard(card: CardType) {
@@ -344,12 +376,20 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
           <span className={styles.handCount}>{human.hand.length} cards in hand</span>
           {canAct && !isReview && <span className={styles.turnHint}>Your turn</span>}
           {isReview && isHumanTurn && <span className={styles.reviewHint}>Review your hand before acting ↓</span>}
+          <div className={styles.sortControls}>
+            <button className={styles.sortBtn} onClick={sortByRank} title="Sort by rank">
+              1→K
+            </button>
+            <button className={styles.sortBtn} onClick={sortBySuit} title="Sort by suit">
+              ♠♥
+            </button>
+          </div>
         </div>
         <PlayerHand
-          cards={human.hand}
+          cards={handOrder.length > 0 ? handOrder : human.hand}
           selectedIds={selectedIds}
           onCardClick={handleHandCardClick}
-          onReorder={(_cards) => {}}
+          onReorder={setHandOrder}
           disabled={!isHumanTurn || isReview}
           draggable={true}
         />

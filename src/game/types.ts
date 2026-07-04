@@ -62,6 +62,13 @@ export interface GameState {
    */
   discardsThisRound: number;
   winner: Player | null;
+  /**
+   * True while the current player has displaced a wild card from a run/set and
+   * must place it in a new eligible spot before they can discard.
+   * The displaced wild is already sitting in the player's hand; it cannot be
+   * held over to the next turn — the discard action is blocked until cleared.
+   */
+  displacedWildPending: boolean;
 }
 
 // ─── Game Actions ─────────────────────────────────────────────────────────────

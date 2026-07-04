@@ -279,21 +279,28 @@ function handlePlayOnHand(
   if (!targetCombo) return state;
 
   let newCombo: Combo;
+  let displacedWild: Card | undefined;
 
   if (wildToReplace) {
-    // Wild replacement
+    // Wild replacement: player places a natural card where a wild was sitting.
+    // The displaced wild is returned to the player's hand and MUST be re-placed
+    // in a new eligible spot before the turn can end.
     const result = replaceWildInCombo(targetCombo, card, wildToReplace);
     if (!result) return state;
     newCombo = result.newCombo;
-    // The displaced wild goes back into the current player's hand
-    // (handled by UI — here we just update the combo and remove the natural card from hand)
+    displacedWild = result.displacedWild;
   } else {
+    // Normal play: adding a card (including a wild) onto a combo.
     if (!canAddToCombo(targetCombo, card)) return state;
     newCombo = { ...targetCombo, cards: [...targetCombo.cards, card] };
   }
 
   // Remove the played card from current player's hand
   const newCurrentHand = removeCardFromHand(currentPlayer.hand, card.id);
+
+  // If the player plays a wild card while a displaced-wild is pending, that
+  // wild IS the displaced 2 being re-placed — clear the pending obligation.
+  const clearsPending = state.displacedWildPending && card.isWild;
 
   const players = state.players.map((p, i) => {
     const isCurrentPlayer = i === state.currentPlayerIndex;
@@ -303,7 +310,7 @@ function handlePlayOnHand(
 
     // Build the updated hand (only changes for the current player)
     const updatedHand = isCurrentPlayer
-      ? (wildToReplace ? [...newCurrentHand, wildToReplace] : newCurrentHand)
+      ? (displacedWild ? [...newCurrentHand, displacedWild] : newCurrentHand)
       : p.hand;
 
     // Build the updated laidDown (only changes for the target player)
@@ -318,11 +325,20 @@ function handlePlayOnHand(
     return { ...p, hand: updatedHand, laidDown: updatedLaidDown };
   });
 
-  return { ...state, players };
+  // Displacing a wild sets the pending flag; playing the displaced wild clears it.
+  const newDisplacedWildPending = displacedWild
+    ? true
+    : clearsPending
+      ? false
+      : state.displacedWildPending;
+
+  return { ...state, players, displacedWildPending: newDisplacedWildPending };
 }
 
 function handleDiscard(state: GameState, card: Card): GameState {
   if (!canDiscard(card)) return state; // 2s cannot be discarded
+  // A displaced wild must be placed before the player can end their turn
+  if (state.displacedWildPending) return state;
 
   const currentPlayer = state.players[state.currentPlayerIndex];
   const newHand = removeCardFromHand(currentPlayer.hand, card.id);
@@ -419,4 +435,5 @@ export const initialGameState: GameState = {
   roundNumber: 0,
   discardsThisRound: 0,
   winner: null,
+  displacedWildPending: false,
 };
