@@ -60,7 +60,7 @@
   top: 0;
   width: 3px;
   height: 100%;
-  background: #f0c040;
+  background: var(--accent);
   border-radius: 2px;
   z-index: 20;
 }

@@ -17,6 +17,7 @@ export function GameSetup({ onStart }: GameSetupProps) {
           <span className={styles.logoSuit}>♥</span>
         </div>
         <p className={styles.subtitle}>The family card game</p>
+        <div className={styles.divider} />
 
         <div className={styles.section}>
           <label className={styles.sectionLabel}>Number of computer opponents</label>

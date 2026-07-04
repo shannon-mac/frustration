@@ -22,12 +22,6 @@
   gap: 10px;
 }
 
-/*
- * The pile div uses the scaled dimensions as its layout footprint so the
- * surrounding flow allocates the right space. The inner card is scaled via
- * transform (transform-origin: top left) which doesn't affect layout, so we
- * manually set width/height on .pile to compensate.
- */
 .pile {
   position: relative;
   width: var(--pile-card-w);
@@ -50,56 +44,57 @@
 
 .badge {
   position: absolute;
-  /* Offset relative to the scaled card top-right corner */
   top: calc(var(--pile-card-h) * -0.08);
   right: calc(var(--pile-card-w) * -0.1);
-  background: #f0c040;
-  color: #1a1a1a;
-  font-size: 13px;
-  font-weight: 800;
+  background: var(--text);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
   border-radius: 50%;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  box-shadow: var(--shadow-sm);
   z-index: 1;
 }
 
 .label {
-  font-size: 12px;
-  color: rgba(255,255,255,0.5);
+  font-size: 11px;
+  color: var(--text-faint);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .emptyPile {
   width: var(--pile-card-w);
   height: var(--pile-card-h);
   border-radius: calc(8px * var(--pile-scale));
-  border: 2px dashed rgba(255,255,255,0.2);
+  border: 2px dashed var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255,255,255,0.25);
+  color: var(--text-faint);
   font-size: 13px;
 }
 
 .redrawBtn {
   font-size: 10px;
-  background: rgba(240,192,64,0.15);
-  border: 1px solid #f0c040;
-  color: #f0c040;
+  background: var(--gold-soft);
+  border: 1px solid #fbbf24;
+  color: var(--gold);
   padding: 3px 10px;
   border-radius: 20px;
   cursor: pointer;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.04em;
   white-space: nowrap;
+  font-family: var(--font-body);
+  transition: background 0.12s;
 }
 
 .redrawBtn:hover {
-  background: rgba(240,192,64,0.3);
+  background: #fef9c3;
 }

@@ -7,7 +7,6 @@
   max-width: 700px;
   margin: 0 auto;
   box-sizing: border-box;
-  /* Ensure the board itself doesn't scroll past the hand */
   padding-bottom: 0;
 }
 
@@ -30,29 +29,31 @@
 
 .myLevelNum {
   font-size: 30px;
-  font-weight: 900;
-  color: #f0c040;
+  font-weight: 400;
+  color: var(--accent);
   line-height: 1;
-  font-family: 'Georgia', serif;
+  font-family: var(--font-display);
 }
 
 .myLevelLabel {
   font-size: 10px;
-  color: rgba(255,255,255,0.45);
+  color: var(--text-faint);
   white-space: nowrap;
+  font-weight: 500;
+  letter-spacing: 0.04em;
 }
 
 .myTurn {
   font-size: 13px;
-  font-weight: 800;
-  color: #f0c040;
+  font-weight: 600;
+  color: var(--accent);
   letter-spacing: 0.02em;
-  animation: pulse 1.5s ease-in-out infinite;
+  animation: pulse 1.8s ease-in-out infinite;
 }
 
 .theirTurn {
   font-size: 12px;
-  color: rgba(255,255,255,0.45);
+  color: var(--text-faint);
 }
 
 .topBarRight {
@@ -63,38 +64,41 @@
 }
 
 .levelsBtn {
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.18);
-  color: rgba(255,255,255,0.7);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   padding: 6px 12px;
   border-radius: 20px;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s;
+  transition: background 0.15s, border-color 0.15s;
+  font-family: var(--font-body);
+  box-shadow: var(--shadow-sm);
 }
-.levelsBtn:hover { background: rgba(255,255,255,0.15); }
+.levelsBtn:hover {
+  background: var(--surface-alt);
+  border-color: var(--text-faint);
+}
 
 .newGameBtn {
-  background: rgba(192,57,43,0.18);
-  border: 1px solid rgba(192,57,43,0.45);
-  color: #ff8a80;
+  background: var(--surface);
+  border: 1px solid #fca5a5;
+  color: #dc2626;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   padding: 6px 12px;
   border-radius: 20px;
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.15s;
+  font-family: var(--font-body);
+  box-shadow: var(--shadow-sm);
 }
-.newGameBtn:hover { background: rgba(192,57,43,0.32); }
+.newGameBtn:hover { background: #fff5f5; }
 
 /* ─── Opponents row ────────────────────────────────────────── */
-/*
- * Flex row, wraps if needed, each tile sized to fit content.
- * No absolute positioning — tiles stay in flow and never overlap.
- */
 .opponents {
   display: flex;
   flex-direction: row;
@@ -106,10 +110,6 @@
 }
 
 /* ─── Central piles zone ───────────────────────────────────── */
-/*
- * Row layout: [ deck | discard ]  [ buy bar ]
- * The buy bar sits to the right and doesn't shift the piles when it appears.
- */
 .centralZone {
   display: flex;
   flex-direction: row;
@@ -117,8 +117,8 @@
   justify-content: center;
   gap: 16px;
   padding: 12px 0;
-  border-top: 1px solid rgba(255,255,255,0.06);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid var(--border-soft);
+  border-bottom: 1px solid var(--border-soft);
   flex-shrink: 0;
 }
 
@@ -128,13 +128,14 @@
   flex-direction: column;
   align-items: stretch;
   gap: 8px;
-  background: rgba(240,192,64,0.12);
-  border: 1.5px solid rgba(240,192,64,0.4);
-  border-radius: 12px;
+  background: var(--gold-soft);
+  border: 1.5px solid #fcd34d;
+  border-radius: var(--radius-md);
   padding: 10px 12px;
   animation: popIn 0.2s ease;
   min-width: 120px;
   flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
 }
 
 @keyframes popIn {
@@ -152,78 +153,79 @@
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: rgba(255,255,255,0.4);
-  font-weight: 700;
+  color: var(--text-faint);
+  font-weight: 600;
 }
 
 .buyCardName {
   font-size: 14px;
-  font-weight: 800;
-  color: #f0c040;
+  font-weight: 700;
+  color: var(--gold);
 }
 
 .buyBtn {
-  background: #2ecc71;
+  background: var(--green);
   color: #fff;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   font-size: 14px;
-  font-weight: 900;
+  font-weight: 700;
   padding: 8px 10px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  transition: filter 0.12s, transform 0.1s;
-  font-family: 'Georgia', serif;
+  transition: opacity 0.12s, transform 0.1s;
+  font-family: var(--font-body);
   white-space: nowrap;
 }
-.buyBtn:hover { filter: brightness(1.12); transform: scale(1.04); }
+.buyBtn:hover { opacity: 0.88; transform: scale(1.03); }
 .buyBtn:active { transform: scale(0.97); }
 
 .buyPassBtn {
   background: transparent;
-  color: rgba(255,255,255,0.55);
-  border: 1.5px solid rgba(255,255,255,0.2);
-  border-radius: 10px;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   padding: 7px 10px;
   cursor: pointer;
   text-align: center;
   transition: border-color 0.12s, color 0.12s, transform 0.1s;
+  font-family: var(--font-body);
   white-space: nowrap;
 }
-.buyPassBtn:hover { color: #fff; border-color: rgba(255,255,255,0.5); transform: scale(1.04); }
+.buyPassBtn:hover { color: var(--text); border-color: var(--text-muted); transform: scale(1.03); }
 .buyPassBtn:active { transform: scale(0.97); }
 
 .buyTimer {
-  font-size: 13px;
-  opacity: 0.85;
-  background: rgba(0,0,0,0.2);
-  padding: 2px 7px;
-  border-radius: 6px;
+  font-size: 12px;
+  opacity: 0.8;
+  background: rgba(0,0,0,0.1);
+  padding: 1px 6px;
+  border-radius: 4px;
   min-width: 28px;
   text-align: center;
 }
 
 .buyBlocked {
   font-size: 11px;
-  color: rgba(255,255,255,0.35);
+  color: var(--text-faint);
   font-style: italic;
 }
 
 /* ─── Table zone ───────────────────────────────────────────── */
 .tableZone {
-  background: rgba(0,0,0,0.22);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   padding: 8px 12px;
   flex-shrink: 0;
-  /* Let the zone grow wider than the board max-width and scroll if needed */
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  box-shadow: var(--shadow-sm);
 }
 
 .tableLabel {
@@ -231,14 +233,14 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: rgba(255,255,255,0.3);
-  font-weight: 700;
+  color: var(--text-faint);
+  font-weight: 600;
   margin-bottom: 8px;
 }
 
 .allLaidDown {
   display: flex;
-  flex-wrap: nowrap;  /* never wrap — widen instead */
+  flex-wrap: nowrap;
   gap: 12px;
   width: max-content;
   min-width: 100%;
@@ -252,8 +254,8 @@
 
 .playerLaidDownName {
   font-size: 10px;
-  color: rgba(255,255,255,0.35);
-  font-weight: 700;
+  color: var(--text-faint);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.07em;
 }
@@ -272,38 +274,41 @@
 
 .actionBtn {
   padding: 10px 22px;
-  background: #f0c040;
-  color: #1a1a1a;
+  background: var(--text);
+  color: #fff;
   font-size: 14px;
-  font-weight: 900;
+  font-weight: 600;
   border: none;
-  border-radius: 22px;
+  border-radius: 20px;
   cursor: pointer;
-  letter-spacing: 0.04em;
-  transition: filter 0.12s, transform 0.1s;
-  font-family: 'Georgia', serif;
+  letter-spacing: 0.02em;
+  transition: opacity 0.12s, transform 0.1s;
+  font-family: var(--font-body);
   white-space: nowrap;
+  box-shadow: var(--shadow-sm);
 }
-.actionBtn:hover { filter: brightness(1.1); transform: scale(1.03); }
+.actionBtn:hover { opacity: 0.84; transform: scale(1.02); }
 .actionBtn:active { transform: scale(0.97); }
 
 .secondaryBtn {
-  background: rgba(255,255,255,0.12);
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.2);
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
 }
-.secondaryBtn:hover { background: rgba(255,255,255,0.18); }
+.secondaryBtn:hover { background: var(--surface-alt); opacity: 1; }
 
 .cancelBtn {
-  background: rgba(192,57,43,0.18);
-  color: #ff8a80;
-  border: 1px solid rgba(192,57,43,0.4);
+  background: var(--surface);
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  box-shadow: var(--shadow-sm);
 }
-.cancelBtn:hover { background: rgba(192,57,43,0.32); }
+.cancelBtn:hover { background: #fff5f5; opacity: 1; }
 
 .actionHint {
   font-size: 12px;
-  color: rgba(255,255,255,0.4);
+  color: var(--text-faint);
   font-style: italic;
   text-align: center;
 }
@@ -312,16 +317,14 @@
 .handArea {
   position: sticky;
   bottom: 0;
-  /* Pull it out of the flex gap so it hugs the viewport edge */
   margin-top: auto;
   margin-left: -8px;
   margin-right: -8px;
   padding: 8px 8px 12px;
-  border-top: 1px solid rgba(255,255,255,0.07);
-  /* Frosted backing so content scrolling underneath is readable */
-  background: rgba(17, 34, 17, 0.92);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  border-top: 1px solid var(--border);
+  background: rgba(245, 242, 238, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 10;
 }
 
@@ -341,21 +344,23 @@
 }
 
 .sortBtn {
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.15);
-  color: rgba(255,255,255,0.55);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
   font-size: 11px;
-  font-weight: 700;
-  padding: 3px 8px;
+  font-weight: 600;
+  padding: 3px 9px;
   border-radius: 12px;
   cursor: pointer;
   line-height: 1.4;
   transition: background 0.12s, color 0.12s;
   white-space: nowrap;
+  font-family: var(--font-body);
 }
 .sortBtn:hover {
-  background: rgba(255,255,255,0.14);
-  color: rgba(255,255,255,0.9);
+  background: var(--surface-alt);
+  color: var(--text);
+  border-color: var(--text-faint);
 }
 .sortBtn:active {
   transform: scale(0.95);
@@ -363,5 +368,5 @@
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  50% { opacity: 0.45; }
 }

@@ -9,23 +9,23 @@
   flex-direction: column;
   gap: 3px;
   padding: 4px 6px;
-  border-radius: 6px;
-  border: 1.5px solid transparent;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
 }
 
 .run {
-  background: rgba(100, 200, 255, 0.07);
-  border-color: rgba(100, 200, 255, 0.18);
+  background: var(--blue-soft);
+  border-color: rgba(29,78,216,0.15);
 }
 
 .set {
-  background: rgba(200, 150, 255, 0.07);
-  border-color: rgba(200, 150, 255, 0.18);
+  background: var(--violet-soft);
+  border-color: rgba(124,58,237,0.12);
 }
 
 .highlighted {
-  border-color: #f0c040 !important;
-  background: rgba(240, 192, 64, 0.1) !important;
+  border-color: var(--accent) !important;
+  background: var(--accent-soft) !important;
 }
 
 .clickable {
@@ -33,16 +33,16 @@
 }
 
 .clickable:hover {
-  border-color: rgba(255,255,255,0.5) !important;
-  background: rgba(255,255,255,0.08) !important;
+  border-color: var(--border) !important;
+  background: var(--surface-alt) !important;
 }
 
 .label {
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  font-weight: 700;
-  color: rgba(255,255,255,0.4);
+  font-weight: 600;
+  color: var(--text-faint);
 }
 
 .cards {

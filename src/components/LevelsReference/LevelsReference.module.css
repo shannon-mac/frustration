@@ -1,7 +1,7 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.72);
+  background: rgba(0,0,0,0.35);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -19,10 +19,10 @@
 }
 
 .panel {
-  background: #112211;
-  border: 1.5px solid rgba(255,255,255,0.12);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-bottom: none;
-  border-radius: 20px 20px 0 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   width: 100%;
   max-width: 480px;
   max-height: 90vh;
@@ -32,12 +32,13 @@
   flex-direction: column;
   gap: 14px;
   animation: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--shadow-xl);
 }
 
 @media (min-height: 600px) {
   .panel {
-    border: 1.5px solid rgba(255,255,255,0.12);
-    border-radius: 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
   }
 }
 
@@ -53,18 +54,18 @@
 }
 
 .title {
-  font-family: 'Georgia', serif;
+  font-family: var(--font-display);
   font-size: 22px;
-  font-weight: 900;
-  color: #f0c040;
+  font-weight: 400;
+  color: var(--text);
   margin: 0;
 }
 
 .closeBtn {
-  background: rgba(255,255,255,0.08);
-  border: none;
-  color: rgba(255,255,255,0.6);
-  font-size: 18px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 16px;
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -74,23 +75,24 @@
   justify-content: center;
   transition: background 0.15s;
 }
-.closeBtn:hover { background: rgba(255,255,255,0.15); }
+.closeBtn:hover { background: var(--border); color: var(--text); }
 
 .rules {
   font-size: 11px;
-  color: rgba(255,255,255,0.4);
+  color: var(--text-muted);
   line-height: 1.6;
-  background: rgba(255,255,255,0.04);
-  border-radius: 8px;
+  background: var(--surface-alt);
+  border-radius: var(--radius-sm);
   padding: 8px 10px;
+  border: 1px solid var(--border-soft);
 }
 
-.rules strong { color: rgba(255,255,255,0.6); }
+.rules strong { color: var(--text); }
 
 .list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
 .row {
@@ -98,15 +100,15 @@
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.04);
-  border: 1.5px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--surface-alt);
+  border: 1px solid var(--border-soft);
   transition: background 0.15s;
 }
 
 .row.current {
-  background: rgba(240,192,64,0.1);
-  border-color: rgba(240,192,64,0.4);
+  background: var(--accent-soft);
+  border-color: rgba(194,65,12,0.2);
 }
 
 .row.done {
@@ -117,24 +119,24 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.1);
+  background: var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
-  font-weight: 800;
-  color: rgba(255,255,255,0.6);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
   flex-shrink: 0;
 }
 
 .row.current .levelNum {
-  background: #f0c040;
-  color: #1a1a1a;
+  background: var(--accent);
+  color: #fff;
 }
 
 .row.done .levelNum {
-  color: #2ecc71;
-  background: rgba(46,204,113,0.15);
+  color: var(--green);
+  background: var(--green-soft);
 }
 
 .levelBody {
@@ -146,13 +148,13 @@
 
 .levelDesc {
   font-size: 13px;
-  font-weight: 700;
-  color: #e8e8e8;
+  font-weight: 600;
+  color: var(--text);
 }
 
 .row.done .levelDesc {
   text-decoration: line-through;
-  color: rgba(255,255,255,0.35);
+  color: var(--text-faint);
 }
 
 .pills {
@@ -163,31 +165,31 @@
 
 .pill {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   padding: 2px 8px;
   border-radius: 20px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
 }
 
 .setPill {
-  background: rgba(200,150,255,0.15);
-  color: #c896ff;
-  border: 1px solid rgba(200,150,255,0.3);
+  background: var(--violet-soft);
+  color: var(--violet);
+  border: 1px solid rgba(124,58,237,0.15);
 }
 
 .runPill {
-  background: rgba(100,200,255,0.12);
-  color: #64c8ff;
-  border: 1px solid rgba(100,200,255,0.25);
+  background: var(--blue-soft);
+  color: var(--blue);
+  border: 1px solid rgba(29,78,216,0.15);
 }
 
 .youBadge {
   font-size: 10px;
-  font-weight: 900;
-  background: #f0c040;
-  color: #1a1a1a;
+  font-weight: 700;
+  background: var(--accent);
+  color: #fff;
   padding: 2px 8px;
   border-radius: 20px;
   flex-shrink: 0;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
 }
