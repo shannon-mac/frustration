@@ -23,8 +23,13 @@
 .cardWrapper {
   margin-right: var(--card-overlap, -14px);
   transition: transform 0.12s, margin 0.12s;
-  cursor: grab;
   flex-shrink: 0;
+  /* prevent browser scroll/pan interfering with touch drag */
+  touch-action: none;
+}
+
+.cardWrapper.draggable {
+  cursor: grab;
 }
 
 .cardWrapper:last-child {
@@ -40,6 +45,7 @@
 .cardWrapper.dragging {
   opacity: 0.4;
   cursor: grabbing;
+  touch-action: none;
 }
 
 .cardWrapper.dropTarget {
