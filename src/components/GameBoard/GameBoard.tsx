@@ -42,22 +42,22 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
   // Buy timer display
   const [buySecondsLeft, setBuySecondsLeft] = useState(0);
   const buyTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const prevStateRef = useRef(state);
 
   // Detect round transition → show summary for the round that just ended, then review
   if (state.roundNumber !== prevRound && !showRoundSummary) {
+    const previousState = prevStateRef.current;
     setRoundSummaryData({
-      roundNumber: prevRound,
-      players: state.players.map(p => ({
-        ...p,
-        level: p.laidDown ? p.level - 1 : p.level,
-        laidDown: p.laidDown ? { combos: [] } : null,
-      })),
+      roundNumber: previousState.roundNumber,
+      players: previousState.players,
     });
     setShowRoundSummary(true);
     setPrevRound(state.roundNumber);
     setUIMode({ type: 'review' });
     setLaidDownThisTurn(false);
   }
+
+  prevStateRef.current = state;
 
   // Keep handOrder in sync with the live hand:
   // cards removed (played/discarded) are dropped; newly drawn/bought cards are appended
