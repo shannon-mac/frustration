@@ -427,9 +427,18 @@ function handleDiscard(state: GameState, card: Card): GameState {
  * Checks if the player who just discarded has gone out, then advances the turn.
  */
 function handleAdvanceTurn(state: GameState): GameState {
-  if (state.turnPhase !== 'discard') return state;
-
   const currentPlayer = state.players[state.currentPlayerIndex];
+
+  // Normal path: discard phase advances to the next player.
+  // Also handle the edge case where the AI played out an empty hand without
+  // discarding (went out by using all cards in the level combo — remaining === 0).
+  if (state.turnPhase !== 'discard') {
+    if (state.turnPhase === 'action' && currentPlayer.hand.length === 0) {
+      return { ...state, gamePhase: 'roundEnd' };
+    }
+    return state;
+  }
+
   if (currentPlayer.hand.length === 0) {
     // The discarding player went out — end the round
     return { ...state, gamePhase: 'roundEnd' };

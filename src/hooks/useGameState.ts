@@ -261,6 +261,15 @@ export function useGameState(): UseGameStateReturn {
       dispatch(action);
       await sleep(AI_ACTION_DELAY_MS);
     }
+
+    // If no DISCARD action was in the list (e.g. the AI played exactly the right
+    // combo cards and has an empty hand — going out), advance the turn now.
+    // handleAdvanceTurn will detect the empty hand and end the round.
+    if (genRef.current !== gen) return;
+    const finalState = stateRef.current;
+    if (finalState.gamePhase === 'playing' && finalState.currentPlayerIndex === playerIndex) {
+      dispatch({ type: 'ADVANCE_TURN' });
+    }
   }, [runBuyWindow]);
 
   // ─── Watch for AI turns ────────────────────────────────────────────────────

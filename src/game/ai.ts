@@ -1,5 +1,5 @@
 import { getHandSizeLimit } from './deck';
-import { LEVELS, RANK_ORDER, canAddToCombo, isValidRun, isValidSet, replaceWildInCombo } from './rules';
+import { LEVELS, RANK_ORDER, canAddToCombo, isValidRun, isValidSet, replaceWildInCombo, validateLayDownCardCount } from './rules';
 import type { LevelDefinition } from './rules';
 import type { Card, Combo, GameAction, GameState, Player } from './types';
 
@@ -470,10 +470,15 @@ export function computeAITurn(state: GameState, playerIndex: number): GameAction
   if (player.laidDown === null) {
     const combo = findBestLevelCombo(simulatedHand, player.level);
     if (combo) {
-      actions.push({ type: 'LAY_DOWN', playerIndex, combos: combo });
-      willLayDown = true;
-      const comboCardIds = new Set(combo.flatMap(c => c.cards.map(card => card.id)));
-      handAfterLayDown = simulatedHand.filter(c => !comboCardIds.has(c.id));
+      // Only plan to lay down if the engine will accept it.
+      // validateLayDownCardCount rejects combos that leave a wild as the sole
+      // remaining card (since wilds cannot be discarded to end the turn).
+      if (validateLayDownCardCount(simulatedHand, player.level, combo)) {
+        actions.push({ type: 'LAY_DOWN', playerIndex, combos: combo });
+        willLayDown = true;
+        const comboCardIds = new Set(combo.flatMap(c => c.cards.map(card => card.id)));
+        handAfterLayDown = simulatedHand.filter(c => !comboCardIds.has(c.id));
+      }
     }
   }
 
