@@ -3,6 +3,7 @@ import {
   canAddToCombo,
   canDiscard,
   replaceWildInCombo,
+  sortComboCards,
   validateLayDownCardCount,
   validateLevelCombo,
 } from './rules';
@@ -291,9 +292,12 @@ function handleLayDown(state: GameState, playerIndex: number, combos: Combo[]): 
   const comboCardIds = new Set(combos.flatMap(c => c.cards.map(card => card.id)));
   const newHand = player.hand.filter(c => !comboCardIds.has(c.id));
 
+  // Sort each combo's cards into rank order for display
+  const sortedCombos = combos.map(c => sortComboCards(c));
+
   const players = state.players.map((p, i) =>
     i === playerIndex
-      ? { ...p, hand: newHand, laidDown: { combos } }
+      ? { ...p, hand: newHand, laidDown: { combos: sortedCombos } }
       : p,
   );
 
@@ -308,6 +312,7 @@ function handlePlayOnHand(
   targetComboIndex: number,
   card: Card,
   wildToReplace?: Card,
+  wildPlacementEnd?: 'low' | 'high',
 ): GameState {
   const currentPlayer = state.players[state.currentPlayerIndex];
   // Must have laid down own combo first
@@ -333,7 +338,9 @@ function handlePlayOnHand(
   } else {
     // Normal play: adding a card (including a wild) onto a combo.
     if (!canAddToCombo(targetCombo, card)) return state;
-    newCombo = { ...targetCombo, cards: [...targetCombo.cards, card] };
+    const unsorted: Combo = { ...targetCombo, cards: [...targetCombo.cards, card] };
+    // Sort the combo cards into rank order; for wilds on runs, honour the chosen end.
+    newCombo = sortComboCards(unsorted, card.isWild ? wildPlacementEnd : undefined);
   }
 
   // Remove the played card from current player's hand
@@ -481,6 +488,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         action.targetComboIndex,
         action.card,
         action.wildToReplace,
+        action.wildPlacementEnd,
       );
 
     case 'DISCARD':

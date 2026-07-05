@@ -33,7 +33,7 @@ export interface UseGameStateReturn {
   firstPlayerKeep: () => void;
   firstPlayerRedraw: () => void;
   layDown: (combos: Combo[]) => void;
-  playOnHand: (targetPlayerIndex: number, targetComboIndex: number, card: Card, wildToReplace?: Card) => void;
+  playOnHand: (targetPlayerIndex: number, targetComboIndex: number, card: Card, wildToReplace?: Card, wildPlacementEnd?: 'low' | 'high') => void;
   discard: (card: Card) => void;
 
   // Buy / rummy decision
@@ -275,8 +275,9 @@ export function useGameState(): UseGameStateReturn {
     targetComboIndex: number,
     card: Card,
     wildToReplace?: Card,
+    wildPlacementEnd?: 'low' | 'high',
   ) => {
-    dispatch({ type: 'PLAY_ON_HAND', targetPlayerIndex, targetComboIndex, card, wildToReplace });
+    dispatch({ type: 'PLAY_ON_HAND', targetPlayerIndex, targetComboIndex, card, wildToReplace, wildPlacementEnd });
   }, []);
 
   const discard = useCallback(async (card: Card) => {

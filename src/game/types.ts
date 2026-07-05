@@ -140,6 +140,11 @@ interface PlayOnHandAction {
   card: Card;
   /** The wild card being replaced (if this play displaces a wild). */
   wildToReplace?: Card;
+  /**
+   * When the card being played is a wild (2) onto a run, specifies which end of
+   * the run the wild should extend. Defaults to 'low' when omitted.
+   */
+  wildPlacementEnd?: 'low' | 'high';
 }
 
 /** The active player discards a card to end their turn. */

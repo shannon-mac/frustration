@@ -241,6 +241,94 @@ export function replaceWildInCombo(
   return { newCombo, displacedWild: wildCard };
 }
 
+// ─── Combo display ordering ───────────────────────────────────────────────────
+
+/**
+ * Returns the constraints on where a wild card can be placed when extending a run.
+ * A wild cannot extend the low end if the lowest natural card is already a '3'
+ * (rank value 3 — the minimum), and cannot extend the high end if the highest
+ * natural card is already an Ace (rank value 14 — the maximum).
+ */
+export function getRunEndConstraints(combo: Combo): { canGoLow: boolean; canGoHigh: boolean } {
+  const naturals = combo.cards.filter(c => !c.isWild);
+  if (naturals.length === 0) return { canGoLow: true, canGoHigh: true };
+  const minVal = Math.min(...naturals.map(c => RANK_ORDER[c.rank]));
+  const maxVal = Math.max(...naturals.map(c => RANK_ORDER[c.rank]));
+  return {
+    canGoLow: minVal > 3,   // rank '3' has value 3 — nothing lower exists
+    canGoHigh: maxVal < 14, // rank 'A' has value 14 — nothing higher exists
+  };
+}
+
+/**
+ * Returns a new Combo with its cards sorted in rank order for display.
+ *
+ * - Sets: natural cards sorted ascending by rank, wilds last.
+ * - Runs: cards ordered in the positional sequence from lowest to highest rank.
+ *   Wild cards fill interior gaps first; any remaining wilds extend the low end
+ *   by default, or the high end when `wildEndOverride` is 'high'.
+ */
+export function sortComboCards(combo: Combo, wildEndOverride?: 'low' | 'high'): Combo {
+  if (combo.type === 'set') {
+    const sorted = [...combo.cards].sort((a, b) => {
+      if (a.isWild !== b.isWild) return a.isWild ? 1 : -1;
+      return RANK_ORDER[a.rank] - RANK_ORDER[b.rank];
+    });
+    return { ...combo, cards: sorted };
+  }
+
+  // ── Run ordering ──────────────────────────────────────────────────────────
+  const naturals = combo.cards
+    .filter(c => !c.isWild)
+    .sort((a, b) => RANK_ORDER[a.rank] - RANK_ORDER[b.rank]);
+  const wilds = combo.cards.filter(c => c.isWild);
+
+  if (naturals.length === 0) {
+    // All wilds — just return as-is
+    return combo;
+  }
+
+  const minVal = RANK_ORDER[naturals[0].rank];
+  const maxVal = RANK_ORDER[naturals[naturals.length - 1].rank];
+  const naturalSpan = maxVal - minVal + 1;
+  const interiorGaps = naturalSpan - naturals.length;
+  const wildsForInterior = Math.min(wilds.length, interiorGaps);
+  const wildsAtEnds = wilds.length - wildsForInterior;
+
+  // Determine the low anchor of the run
+  const wildsAtLow = wildEndOverride === 'high' ? 0 : wildsAtEnds;
+  const lowAnchor = minVal - wildsAtLow;
+
+  // Build positional array: slot → card
+  const totalLen = combo.cards.length;
+  const result: (Card | null)[] = new Array(totalLen).fill(null);
+
+  // Place naturals at their exact positions
+  for (const card of naturals) {
+    const pos = RANK_ORDER[card.rank] - lowAnchor;
+    if (pos >= 0 && pos < totalLen) result[pos] = card;
+  }
+
+  // Distribute wilds to unfilled slots
+  let wildIdx = 0;
+  for (let i = 0; i < totalLen && wildIdx < wilds.length; i++) {
+    if (result[i] === null) {
+      result[i] = wilds[wildIdx++];
+    }
+  }
+  // Unused high-end wilds
+  for (let i = totalLen - 1; i >= 0 && wildIdx < wilds.length; i--) {
+    if (result[i] === null) {
+      result[i] = wilds[wildIdx++];
+    }
+  }
+  // Fallback: append any remaining wilds (shouldn't happen in a valid run)
+  const sorted = result.filter((c): c is Card => c !== null);
+  while (wildIdx < wilds.length) sorted.push(wilds[wildIdx++]);
+
+  return { ...combo, cards: sorted };
+}
+
 // ─── Discard rule ─────────────────────────────────────────────────────────────
 
 /** 2s (wilds) cannot be discarded. */

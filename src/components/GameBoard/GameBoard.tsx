@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Card as CardType, Combo } from '../../game/types';
-import { canDiscard, RANK_ORDER } from '../../game/rules';
+import { canDiscard, getRunEndConstraints, RANK_ORDER } from '../../game/rules';
 import { BUY_WINDOW_MS, type UseGameStateReturn } from '../../hooks/useGameState';
 import { CardPile } from '../CardPile/CardPile';
 import { GameOverScreen } from '../GameOverScreen/GameOverScreen';
@@ -22,7 +22,8 @@ type UIMode =
   | { type: 'idle' }
   | { type: 'pendingDiscard'; card: CardType }
   | { type: 'layDownModal' }
-  | { type: 'buildingOnHand'; selectedCard: CardType };
+  | { type: 'buildingOnHand'; selectedCard: CardType }
+  | { type: 'wildPlacement'; selectedCard: CardType; targetPlayerIndex: number; targetComboIndex: number; combo: Combo };
 
 export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
   const { state, buyOffer, isHumanTurn, humanPlayerIndex } = game;
@@ -156,7 +157,35 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
   function handleComboCardClick(playerIdx: number, comboIdx: number) {
     if (uiMode.type !== 'buildingOnHand') return;
     if (!human.laidDown) return;
-    game.playOnHand(playerIdx, comboIdx, uiMode.selectedCard);
+
+    const card = uiMode.selectedCard;
+    const targetPlayer = state.players[playerIdx];
+    const combo = targetPlayer?.laidDown?.combos[comboIdx];
+
+    // Wild card playing onto a run: may need to ask which end
+    if (card.isWild && combo && combo.type === 'run') {
+      const { canGoLow, canGoHigh } = getRunEndConstraints(combo);
+      if (canGoLow && canGoHigh) {
+        // Both ends are available — ask the player
+        setUIMode({ type: 'wildPlacement', selectedCard: card, targetPlayerIndex: playerIdx, targetComboIndex: comboIdx, combo });
+        return;
+      }
+      // Only one end valid — auto-place
+      const end: 'low' | 'high' = canGoHigh ? 'high' : 'low';
+      game.playOnHand(playerIdx, comboIdx, card, undefined, end);
+      setSelectedIds(new Set());
+      setUIMode({ type: 'idle' });
+      return;
+    }
+
+    game.playOnHand(playerIdx, comboIdx, card);
+    setSelectedIds(new Set());
+    setUIMode({ type: 'idle' });
+  }
+
+  function handleWildPlacement(end: 'low' | 'high') {
+    if (uiMode.type !== 'wildPlacement') return;
+    game.playOnHand(uiMode.targetPlayerIndex, uiMode.targetComboIndex, uiMode.selectedCard, undefined, end);
     setSelectedIds(new Set());
     setUIMode({ type: 'idle' });
   }
@@ -221,8 +250,9 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
   const pendingDiscardCard = isPendingDiscard
     ? (uiMode as { type: 'pendingDiscard'; card: CardType }).card
     : null;
-  const selectedCard = isBuildMode
-    ? (uiMode as { type: 'buildingOnHand'; selectedCard: CardType }).selectedCard
+  const isWildPlacement = uiMode.type === 'wildPlacement';
+  const selectedCard = (isBuildMode || isWildPlacement)
+    ? (uiMode as { type: 'buildingOnHand'; selectedCard: CardType } | { type: 'wildPlacement'; selectedCard: CardType }).selectedCard
     : null;
 
   return (
@@ -381,7 +411,32 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
         )}
         {isBuildMode && selectedCard && (
           <>
-            <span className={styles.actionHint}>Tap a combo above to place {selectedCard.rank}</span>
+            <span className={styles.actionHint}>Tap a combo above to place {selectedCard.isWild ? 'Wild' : selectedCard.rank}</span>
+            <button
+              className={`${styles.actionBtn} ${styles.cancelBtn}`}
+              onClick={() => { setUIMode({ type: 'idle' }); setSelectedIds(new Set()); }}
+            >
+              Cancel
+            </button>
+          </>
+        )}
+        {isWildPlacement && selectedCard && (
+          <>
+            <span className={styles.actionHint}>
+              Place Wild at which end of the run?
+            </span>
+            <button
+              className={styles.actionBtn}
+              onClick={() => handleWildPlacement('low')}
+            >
+              Low end ←
+            </button>
+            <button
+              className={styles.actionBtn}
+              onClick={() => handleWildPlacement('high')}
+            >
+              → High end
+            </button>
             <button
               className={`${styles.actionBtn} ${styles.cancelBtn}`}
               onClick={() => { setUIMode({ type: 'idle' }); setSelectedIds(new Set()); }}
