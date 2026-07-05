@@ -26,7 +26,7 @@ type UIMode =
   | { type: 'wildPlacement'; selectedCard: CardType; targetPlayerIndex: number; targetComboIndex: number; combo: Combo };
 
 export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
-  const { state, buyOffer, isHumanTurn, humanPlayerIndex } = game;
+  const { state, buyOffer, lastAIAction, isHumanTurn, humanPlayerIndex } = game;
 
   const [uiMode, setUIMode] = useState<UIMode>({ type: 'review' });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -154,6 +154,20 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
     setUIMode({ type: 'idle' });
   }
 
+  /** After placing a card, stay in build mode and auto-select the first remaining card. */
+  function stayInBuildMode(playedCardId: string) {
+    const remaining = (handOrder.length > 0 ? handOrder : human.hand).filter(c => c.id !== playedCardId);
+    // Need at least 2 cards to keep building (must hold one back to discard)
+    if (remaining.length > 1) {
+      const next = remaining[0]!;
+      setUIMode({ type: 'buildingOnHand', selectedCard: next });
+      setSelectedIds(new Set([next.id]));
+    } else {
+      setUIMode({ type: 'idle' });
+      setSelectedIds(new Set());
+    }
+  }
+
   function handleComboCardClick(playerIdx: number, comboIdx: number) {
     if (uiMode.type !== 'buildingOnHand') return;
     if (!human.laidDown) return;
@@ -173,21 +187,19 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
       // Only one end valid — auto-place
       const end: 'low' | 'high' = canGoHigh ? 'high' : 'low';
       game.playOnHand(playerIdx, comboIdx, card, undefined, end);
-      setSelectedIds(new Set());
-      setUIMode({ type: 'idle' });
+      stayInBuildMode(card.id);
       return;
     }
 
     game.playOnHand(playerIdx, comboIdx, card);
-    setSelectedIds(new Set());
-    setUIMode({ type: 'idle' });
+    stayInBuildMode(card.id);
   }
 
   function handleWildPlacement(end: 'low' | 'high') {
     if (uiMode.type !== 'wildPlacement') return;
-    game.playOnHand(uiMode.targetPlayerIndex, uiMode.targetComboIndex, uiMode.selectedCard, undefined, end);
-    setSelectedIds(new Set());
-    setUIMode({ type: 'idle' });
+    const card = uiMode.selectedCard;
+    game.playOnHand(uiMode.targetPlayerIndex, uiMode.targetComboIndex, card, undefined, end);
+    stayInBuildMode(card.id);
   }
 
   function handleHandCardClick(card: CardType) {
@@ -413,10 +425,10 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
           <>
             <span className={styles.actionHint}>Tap a combo above to place {selectedCard.isWild ? 'Wild' : selectedCard.rank}</span>
             <button
-              className={`${styles.actionBtn} ${styles.cancelBtn}`}
+              className={styles.actionBtn}
               onClick={() => { setUIMode({ type: 'idle' }); setSelectedIds(new Set()); }}
             >
-              Cancel
+              Done
             </button>
           </>
         )}
@@ -475,7 +487,12 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
               {human.laidDown ? '✓ laid down' : `Level ${human.level}`}
             </span>
           </div>
-          <span className={isHumanTurn ? styles.myTurn : styles.theirTurn}>{turnLabel}</span>
+          <div className={styles.turnInfo}>
+            <span className={isHumanTurn ? styles.myTurn : styles.theirTurn}>{turnLabel}</span>
+            {!isHumanTurn && lastAIAction && (
+              <span className={styles.aiActionLabel}>{lastAIAction}</span>
+            )}
+          </div>
           <div className={styles.sortControls}>
             <button className={styles.sortBtn} onClick={sortByRank} title="Sort by rank">
               1→K
@@ -498,7 +515,7 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
       {/* ── Modals ───────────────────────────────────────────── */}
       {uiMode.type === 'layDownModal' && (
         <LayDownModal
-          hand={human.hand}
+          hand={handOrder.length > 0 ? handOrder : human.hand}
           level={human.level}
           onConfirm={handleLayDownConfirm}
           onCancel={() => setUIMode({ type: 'idle' })}

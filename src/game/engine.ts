@@ -343,6 +343,9 @@ function handlePlayOnHand(
     newCombo = sortComboCards(unsorted, card.isWild ? wildPlacementEnd : undefined);
   }
 
+  // Guard: card must actually be in the current player's hand to prevent duplicates
+  if (!currentPlayer.hand.some(c => c.id === card.id)) return state;
+
   // Remove the played card from current player's hand
   const newCurrentHand = removeCardFromHand(currentPlayer.hand, card.id);
 
@@ -389,6 +392,9 @@ function handleDiscard(state: GameState, card: Card): GameState {
   if (state.displacedWildPending) return state;
 
   const currentPlayer = state.players[state.currentPlayerIndex];
+  // Guard: card must actually be in the current player's hand
+  if (!currentPlayer.hand.some(c => c.id === card.id)) return state;
+
   const newHand = removeCardFromHand(currentPlayer.hand, card.id);
 
   const players = state.players.map((p, i) =>

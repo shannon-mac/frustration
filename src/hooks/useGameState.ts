@@ -22,6 +22,8 @@ export interface BuyOffer {
 export interface UseGameStateReturn {
   state: GameState;
   buyOffer: BuyOffer | null;   // non-null when human can buy
+  /** Human-readable description of the last action taken by the current AI player. */
+  lastAIAction: string | null;
 
   // Setup
   startGame: (playerCount: number) => void;
@@ -50,11 +52,39 @@ export interface UseGameStateReturn {
 
 const STORAGE_KEY = 'frustration_game_state';
 
+/**
+ * Verify that no card ID appears more than once across the entire game state
+ * (hands, laid-down combos, deck, and discard pile).
+ * Returns true if the state is clean, false if duplicates are found.
+ */
+function isStateDeckIntact(state: typeof initialGameState): boolean {
+  const seen = new Set<string>();
+  const allCards = [
+    ...state.deck,
+    ...state.discardPile,
+    ...state.players.flatMap(p => [
+      ...p.hand,
+      ...(p.laidDown?.combos.flatMap(c => c.cards) ?? []),
+    ]),
+  ];
+  for (const card of allCards) {
+    if (seen.has(card.id)) return false;
+    seen.add(card.id);
+  }
+  return true;
+}
+
 function loadState(): typeof initialGameState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return initialGameState;
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    // Discard saved state if it contains duplicate card IDs (corrupted)
+    if (!isStateDeckIntact(parsed)) {
+      localStorage.removeItem(STORAGE_KEY);
+      return initialGameState;
+    }
+    return parsed;
   } catch {
     return initialGameState;
   }
@@ -71,6 +101,7 @@ function saveState(state: typeof initialGameState) {
 export function useGameState(): UseGameStateReturn {
   const [state, dispatch] = useReducer(gameReducer, undefined, loadState);
   const [buyOffer, setBuyOffer] = useState<BuyOffer | null>(null);
+  const [lastAIAction, setLastAIAction] = useState<string | null>(null);
 
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -195,6 +226,22 @@ export function useGameState(): UseGameStateReturn {
       if (current.gamePhase !== 'playing') return;
       if (current.currentPlayerIndex !== playerIndex) return;
 
+      // Update the visible AI action label
+      const playerName = stateRef.current.players[playerIndex]?.name ?? 'AI';
+      if (action.type === 'DRAW_FROM_DECK') {
+        setLastAIAction(`${playerName} draws from deck`);
+      } else if (action.type === 'DRAW_FROM_DISCARD') {
+        setLastAIAction(`${playerName} draws from discard`);
+      } else if (action.type === 'LAY_DOWN') {
+        setLastAIAction(`${playerName} lays down hand`);
+      } else if (action.type === 'PLAY_ON_HAND') {
+        const cardName = action.card.isWild ? 'Wild' : `${action.card.rank}`;
+        setLastAIAction(`${playerName} plays ${cardName} on table`);
+      } else if (action.type === 'DISCARD') {
+        const cardName = action.card.isWild ? 'Wild' : `${action.card.rank} of ${action.card.suit}`;
+        setLastAIAction(`${playerName} discards ${cardName}`);
+      }
+
       if (action.type === 'DISCARD') {
         // Capture discardsThisRound BEFORE dispatch, then +1 = post-discard count
         const postDiscardCount = stateRef.current.discardsThisRound + 1;
@@ -218,7 +265,11 @@ export function useGameState(): UseGameStateReturn {
   useEffect(() => {
     if (state.gamePhase !== 'playing') return;
     const current = state.players[state.currentPlayerIndex];
-    if (!current || current.isHuman) return;
+    if (!current || current.isHuman) {
+      // It's the human's turn — clear the AI action label
+      setLastAIAction(null);
+      return;
+    }
     if (state.turnPhase !== 'draw') return;
 
     // Bump generation so any stale loop aborts
@@ -295,6 +346,7 @@ export function useGameState(): UseGameStateReturn {
   return {
     state,
     buyOffer,
+    lastAIAction,
     startGame,
     drawFromDeck,
     drawFromDiscard,

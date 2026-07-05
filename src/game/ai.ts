@@ -450,6 +450,9 @@ export function computeAITurn(state: GameState, playerIndex: number): GameAction
         wildToReplace: play.wildToReplace,
       });
     }
+    // Subtract played cards so the discard selection doesn't pick an already-played card
+    const playedIds = new Set(plays.map(p => p.card.id));
+    handAfterLayDown = handAfterLayDown.filter(c => !playedIds.has(c.id));
   }
 
   const discardCard = chooseDiscard(
