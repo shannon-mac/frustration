@@ -207,12 +207,12 @@ export function useGameState(): UseGameStateReturn {
     // skip offering them the buy.
     const nextPlayerIndex = (discardingPlayerIndex + 1) % playerCount;
     for (let offset = 1; offset < playerCount; offset++) {
-      if (genRef.current !== gen) return;
+      if (genRef.current !== gen) { console.warn(`[BUY] gen stale in buy window discardedBy=${discardingPlayerIndex} offset=${offset} gen=${gen} current=${genRef.current}`); return; }
       const idx = (discardingPlayerIndex + offset) % playerCount;
       // Human is next to play — they can draw it naturally, so don't offer a buy
       if (idx === nextPlayerIndex && s.players[idx]?.isHuman) continue;
       const bought = await offerBuyToPlayer(idx, discardedCard, discardingPlayerIndex, gen);
-      if (bought) break;
+      if (bought) { console.log(`[BUY] p${idx} bought from p${discardingPlayerIndex}`); break; }
     }
   }, [offerBuyToPlayer]);
 
@@ -231,18 +231,19 @@ export function useGameState(): UseGameStateReturn {
   const runAITurn = useCallback(async (playerIndex: number, gen: number) => {
     await sleep(AI_TURN_DELAY_MS);
 
-    if (genRef.current !== gen) return;
+    if (genRef.current !== gen) { console.warn(`[AI] p${playerIndex} gen${gen} stale(${genRef.current}) after sleep — STUCK`); return; }
     const s = stateRef.current;
-    if (s.gamePhase !== 'playing') return;
-    if (s.currentPlayerIndex !== playerIndex) return;
+    if (s.gamePhase !== 'playing') { console.warn(`[AI] p${playerIndex} gamePhase=${s.gamePhase} — STUCK`); return; }
+    if (s.currentPlayerIndex !== playerIndex) { console.warn(`[AI] p${playerIndex} currentPlayer=${s.currentPlayerIndex} — STUCK`); return; }
 
+    console.log(`[AI] p${playerIndex} gen=${gen} actions=${computeAITurn(s, playerIndex).map(a=>a.type).join(',')}`);
     const actions = computeAITurn(s, playerIndex);
 
     for (const action of actions) {
-      if (genRef.current !== gen) return;
+      if (genRef.current !== gen) { console.warn(`[AI] p${playerIndex} gen stale on ${action.type} — STUCK`); return; }
       const current = stateRef.current;
       if (current.gamePhase !== 'playing') return;
-      if (current.currentPlayerIndex !== playerIndex) return;
+      if (current.currentPlayerIndex !== playerIndex) { console.warn(`[AI] p${playerIndex} player changed to ${current.currentPlayerIndex} mid-loop — STUCK`); return; }
 
       // Update the visible AI action label
       const playerName = stateRef.current.players[playerIndex]?.name ?? 'AI';
@@ -268,7 +269,8 @@ export function useGameState(): UseGameStateReturn {
         // turnPhase is now 'discard'; currentPlayerIndex hasn't changed,
         // so the useEffect will NOT bump gen here. Safe to run the buy window.
         await runBuyWindow(action.card, playerIndex, gen, postDiscardCount);
-        if (genRef.current !== gen) return;
+        if (genRef.current !== gen) { console.warn(`[AI] p${playerIndex} gen stale after buy window — STUCK (no ADVANCE_TURN)`); return; }
+        console.log(`[AI] p${playerIndex} ADVANCE_TURN`);
         dispatch({ type: 'ADVANCE_TURN' });
         return;
       }
@@ -303,6 +305,8 @@ export function useGameState(): UseGameStateReturn {
     // Bump generation so any stale loop aborts
     genRef.current += 1;
     const gen = genRef.current;
+
+    console.log(`[AI] effect p${state.currentPlayerIndex}(${state.players[state.currentPlayerIndex]?.name}) gen=${gen}`);
 
     // Clear any lingering buy offer
     clearBuyOffer();
