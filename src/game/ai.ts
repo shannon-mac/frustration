@@ -394,17 +394,46 @@ export function chooseDiscard(
   const def = LEVELS[level - 1];
   const scores = discardable.map(card => {
     const withoutCard = hand.filter(c => c.id !== card.id);
+    // How much does keeping this card help our own level progress?
+    const progress = scoreHandProgress(withoutCard, def);
+    // How many of our remaining cards can still be built onto laid-down hands?
+    const buildPotential = state !== undefined && playerIndex !== undefined
+      ? countPotentialBuildCards(withoutCard, state, playerIndex)
+      : 0;
+    // Does discarding this card hand an opponent a free build?
+    // Score by proximity in turn order — the next player picks up the discard
+    // directly so they are the most dangerous recipient.
+    let givesOpponentBuild = 0;
+    if (state !== undefined && playerIndex !== undefined) {
+      const playerCount = state.players.length;
+      for (let offset = 1; offset < playerCount; offset++) {
+        const idx = (playerIndex + offset) % playerCount;
+        const opponent = state.players[idx];
+        if (!opponent.laidDown) continue;
+        if (opponent.laidDown.combos.some(combo => canAddToCombo(combo, card))) {
+          // Next player (offset 1) is most dangerous; further players less so
+          givesOpponentBuild = playerCount - offset; // higher = closer = worse
+          break;
+        }
+      }
+    }
     return {
       card,
-      progress: scoreHandProgress(withoutCard, def),
-      buildPotential: state !== undefined && playerIndex !== undefined
-        ? countPotentialBuildCards(withoutCard, state, playerIndex)
-        : 0,
+      progress,
+      buildPotential,
+      givesOpponentBuild,
       rankValue: RANK_ORDER[card.rank],
     };
   });
 
-  scores.sort((a, b) => b.progress - a.progress || a.buildPotential - b.buildPotential || b.rankValue - a.rankValue);
+  // Primary: keep progress high; secondary: avoid handing opponents a build;
+  // tertiary: keep build potential for self; last: discard high-rank cards.
+  scores.sort((a, b) =>
+    b.progress - a.progress ||
+    a.givesOpponentBuild - b.givesOpponentBuild ||
+    a.buildPotential - b.buildPotential ||
+    b.rankValue - a.rankValue,
+  );
   return scores[0].card;
 }
 

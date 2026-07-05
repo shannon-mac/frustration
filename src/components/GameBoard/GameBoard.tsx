@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { Card as CardType, Combo } from '../../game/types';
+import type { Card as CardType, Combo, Player } from '../../game/types';
 import { canDiscard, getRunEndConstraints, RANK_ORDER } from '../../game/rules';
 import { BUY_WINDOW_MS, type UseGameStateReturn } from '../../hooks/useGameState';
 import { CardPile } from '../CardPile/CardPile';
@@ -31,6 +31,7 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
   const [uiMode, setUIMode] = useState<UIMode>({ type: 'review' });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showRoundSummary, setShowRoundSummary] = useState(false);
+  const [roundSummaryData, setRoundSummaryData] = useState<{ roundNumber: number; players: Player[] } | null>(null);
   const [showLevels, setShowLevels] = useState(false);
   const [prevRound, setPrevRound] = useState(state.roundNumber);
   // Track whether the human just laid down this turn so we can show "Build on Hand"
@@ -42,8 +43,16 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
   const [buySecondsLeft, setBuySecondsLeft] = useState(0);
   const buyTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Detect round transition → show summary then review
+  // Detect round transition → show summary for the round that just ended, then review
   if (state.roundNumber !== prevRound && !showRoundSummary) {
+    setRoundSummaryData({
+      roundNumber: prevRound,
+      players: state.players.map(p => ({
+        ...p,
+        level: p.laidDown ? p.level - 1 : p.level,
+        laidDown: p.laidDown ? { combos: [] } : null,
+      })),
+    });
     setShowRoundSummary(true);
     setPrevRound(state.roundNumber);
     setUIMode({ type: 'review' });
@@ -521,11 +530,14 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
           onCancel={() => setUIMode({ type: 'idle' })}
         />
       )}
-      {showRoundSummary && state.gamePhase === 'playing' && (
+      {showRoundSummary && state.gamePhase === 'playing' && roundSummaryData && (
         <RoundSummary
-          players={state.players}
-          roundNumber={state.roundNumber}
-          onContinue={() => setShowRoundSummary(false)}
+          players={roundSummaryData.players}
+          roundNumber={roundSummaryData.roundNumber}
+          onContinue={() => {
+            setShowRoundSummary(false);
+            setRoundSummaryData(null);
+          }}
         />
       )}
       {showLevels && (

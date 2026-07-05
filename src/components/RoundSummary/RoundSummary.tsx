@@ -18,7 +18,7 @@ export function RoundSummary({ players, roundNumber, onContinue }: RoundSummaryP
             <div key={p.id} className={`${styles.row} ${p.laidDown ? styles.advanced : styles.stayed}`}>
               <span className={styles.name}>{p.name}</span>
               <span className={styles.status}>
-                {p.laidDown ? `Moves on to Level ${p.level + 1}` : `stays on Level ${p.level}`}
+                {p.laidDown ? `moves to level ${p.level + 1}` : `stays at level ${p.level}`}
               </span>
             </div>
           ))}
