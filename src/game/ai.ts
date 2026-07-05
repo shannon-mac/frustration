@@ -310,8 +310,14 @@ export function chooseBuildPlays(
 
   const plays: Array<{ card: Card; targetPlayerIndex: number; targetComboIndex: number; wildToReplace?: Card }> = [];
 
-  for (const card of player.hand) {
-    if (card.isWild) continue;
+  // Separate naturals and wilds — naturals are played first; wilds only if the
+  // hand is all wilds (no natural card available to discard at end of turn).
+  const handNaturals = player.hand.filter(c => !c.isWild);
+  const handWilds    = player.hand.filter(c =>  c.isWild);
+  const allWilds     = handNaturals.length === 0;
+
+  // Natural card plays
+  for (const card of handNaturals) {
     for (let pi = 0; pi < state.players.length; pi++) {
       const target = state.players[pi];
       if (!target.laidDown) continue;
@@ -330,6 +336,24 @@ export function chooseBuildPlays(
         // logic to plan the follow-up re-placement in the same turn.
       }
       if (plays.some(p => p.card.id === card.id)) break;
+    }
+  }
+
+  // Wild plays — only when every card in hand is a wild (no natural to discard).
+  // Playing wilds out is the only legal way to end the turn in this situation.
+  if (allWilds) {
+    for (const card of handWilds) {
+      for (let pi = 0; pi < state.players.length; pi++) {
+        const target = state.players[pi];
+        if (!target.laidDown) continue;
+        for (let ci = 0; ci < target.laidDown.combos.length; ci++) {
+          if (canAddToCombo(target.laidDown.combos[ci], card)) {
+            plays.push({ card, targetPlayerIndex: pi, targetComboIndex: ci });
+            break;
+          }
+        }
+        if (plays.some(p => p.card.id === card.id)) break;
+      }
     }
   }
 
@@ -474,15 +498,18 @@ export function computeAITurn(state: GameState, playerIndex: number): GameAction
     };
     const plays = chooseBuildPlays(simulatedState, playerIndex);
 
-    // Always keep at least one non-wild card back so the AI can discard to end
-    // its turn (wilds cannot be discarded).  Trim plays from the end until the
-    // remaining hand contains a discardable card.
+    // If the hand is all wilds, play them all out — the turn ends via the
+    // fallback path in runAITurn (empty hand → ADVANCE_TURN).
+    // Otherwise trim plays from the end until a non-wild card remains to discard.
+    const handIsAllWilds = !handAfterLayDown.some(c => !c.isWild);
     const keptPlays = [...plays];
-    while (keptPlays.length > 0) {
-      const playedIds = new Set(keptPlays.map(p => p.card.id));
-      const remaining = handAfterLayDown.filter(c => !playedIds.has(c.id));
-      if (remaining.some(c => !c.isWild)) break; // still has something to discard
-      keptPlays.pop();
+    if (!handIsAllWilds) {
+      while (keptPlays.length > 0) {
+        const playedIds = new Set(keptPlays.map(p => p.card.id));
+        const remaining = handAfterLayDown.filter(c => !playedIds.has(c.id));
+        if (remaining.some(c => !c.isWild)) break; // still has something to discard
+        keptPlays.pop();
+      }
     }
 
     for (const play of keptPlays) {

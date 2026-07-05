@@ -286,13 +286,33 @@ export function useGameState(): UseGameStateReturn {
       await sleep(AI_ACTION_DELAY_MS);
     }
 
-    // If no DISCARD action was in the list (e.g. the AI played exactly the right
-    // combo cards and has an empty hand — going out), advance the turn now.
-    // handleAdvanceTurn will detect the empty hand and end the round.
-    // Safety net: no DISCARD in actions (e.g. empty hand after going out by lay-down).
+    // No DISCARD was in the planned actions list. Two sub-cases:
+    //
+    // 1. The player drew from the deck and their pre-draw hand was empty (or all
+    //    cards were played onto combos), so the planner had nothing to pick for
+    //    the discard. The draw has now happened — pick the discard from the live
+    //    hand (which contains exactly the drawn card).
+    //
+    // 2. The player genuinely has no cards left (went out by playing everything).
+    //    Advance the turn and let handleAdvanceTurn end the round.
     if (genRef.current !== gen) return;
     const finalState = stateRef.current;
-    if (finalState.gamePhase === 'playing' && finalState.currentPlayerIndex === playerIndex) {
+    if (finalState.gamePhase !== 'playing' || finalState.currentPlayerIndex !== playerIndex) return;
+
+    const liveHand = finalState.players[playerIndex]?.hand ?? [];
+    const fallbackDiscard = liveHand.find(c => !c.isWild) ?? null;
+
+    if (fallbackDiscard) {
+      addLog(`p${playerIndex} fallback DISCARD ${fallbackDiscard.rank}${fallbackDiscard.suit[0]}`);
+      const postDiscardCount = finalState.discardsThisRound + 1;
+      dispatch({ type: 'DISCARD', card: fallbackDiscard });
+      await sleep(AI_ACTION_DELAY_MS);
+      if (genRef.current !== gen) return;
+      await runBuyWindow(fallbackDiscard, playerIndex, gen, postDiscardCount);
+      if (genRef.current !== gen) return;
+      dispatch({ type: 'ADVANCE_TURN' });
+    } else {
+      // Hand is empty — went out.
       dispatch({ type: 'ADVANCE_TURN' });
     }
   }, [runBuyWindow, addLog]);
