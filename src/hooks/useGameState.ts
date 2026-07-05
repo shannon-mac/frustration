@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { computeAIBuyDecision, computeAITurn } from '../game/ai';
 import { gameReducer, initialGameState } from '../game/engine';
+import { canAddToCombo } from '../game/rules';
 import type { Card, Combo, GameState } from '../game/types';
 
 // ─── Delays ───────────────────────────────────────────────────────────────────
@@ -286,35 +287,68 @@ export function useGameState(): UseGameStateReturn {
       await sleep(AI_ACTION_DELAY_MS);
     }
 
-    // No DISCARD was in the planned actions list. Two sub-cases:
-    //
-    // 1. The player drew from the deck and their pre-draw hand was empty (or all
-    //    cards were played onto combos), so the planner had nothing to pick for
-    //    the discard. The draw has now happened — pick the discard from the live
-    //    hand (which contains exactly the drawn card).
-    //
-    // 2. The player genuinely has no cards left (went out by playing everything).
-    //    Advance the turn and let handleAdvanceTurn end the round.
+    // No DISCARD was in the planned actions list. The draw has now happened so
+    // re-evaluate using the live hand (which includes the just-drawn card).
+    // Cases:
+    //   a) Live hand has a non-wild → discard it normally.
+    //   b) Live hand is still all wilds → play each wild onto any valid combo,
+    //      then discard the first non-wild that appears; if the hand empties
+    //      entirely, advance the turn (player went out).
+    //   c) Hand is empty → player went out; advance the turn.
     if (genRef.current !== gen) return;
-    const finalState = stateRef.current;
-    if (finalState.gamePhase !== 'playing' || finalState.currentPlayerIndex !== playerIndex) return;
+    let fallbackState = stateRef.current;
+    if (fallbackState.gamePhase !== 'playing' || fallbackState.currentPlayerIndex !== playerIndex) return;
 
-    const liveHand = finalState.players[playerIndex]?.hand ?? [];
-    const fallbackDiscard = liveHand.find(c => !c.isWild) ?? null;
+    // Play out any wilds that are blocking the discard
+    while (true) {
+      if (genRef.current !== gen) return;
+      fallbackState = stateRef.current;
+      if (fallbackState.gamePhase !== 'playing' || fallbackState.currentPlayerIndex !== playerIndex) return;
 
-    if (fallbackDiscard) {
-      addLog(`p${playerIndex} fallback DISCARD ${fallbackDiscard.rank}${fallbackDiscard.suit[0]}`);
-      const postDiscardCount = finalState.discardsThisRound + 1;
-      dispatch({ type: 'DISCARD', card: fallbackDiscard });
-      await sleep(AI_ACTION_DELAY_MS);
-      if (genRef.current !== gen) return;
-      await runBuyWindow(fallbackDiscard, playerIndex, gen, postDiscardCount);
-      if (genRef.current !== gen) return;
-      dispatch({ type: 'ADVANCE_TURN' });
-    } else {
-      // Hand is empty — went out.
-      dispatch({ type: 'ADVANCE_TURN' });
+      const liveHand = fallbackState.players[playerIndex]?.hand ?? [];
+      if (liveHand.length === 0) { dispatch({ type: 'ADVANCE_TURN' }); return; }
+      if (liveHand.some(c => !c.isWild)) break; // have a natural — ready to discard
+
+      // All wilds — find a combo to place one onto
+      const wildCard = liveHand[0];
+      let placed = false;
+      for (const target of fallbackState.players) {
+        if (!target.laidDown) continue;
+        for (let ci = 0; ci < target.laidDown.combos.length; ci++) {
+          if (canAddToCombo(target.laidDown.combos[ci], wildCard)) {
+            const ti = fallbackState.players.indexOf(target);
+            addLog(`p${playerIndex} fallback PLAY_ON_HAND wild→p${ti}c${ci}`);
+            dispatch({ type: 'PLAY_ON_HAND', targetPlayerIndex: ti, targetComboIndex: ci, card: wildCard });
+            await sleep(AI_ACTION_DELAY_MS);
+            placed = true;
+            break;
+          }
+        }
+        if (placed) break;
+      }
+      if (!placed) {
+        // No valid combo for any wild — genuinely stuck, advance to unblock the game
+        addLog(`p${playerIndex} fallback: no combo for wild, forcing ADVANCE_TURN`);
+        dispatch({ type: 'ADVANCE_TURN' });
+        return;
+      }
     }
+
+    // Discard the first non-wild in the live hand
+    if (genRef.current !== gen) return;
+    fallbackState = stateRef.current;
+    if (fallbackState.gamePhase !== 'playing' || fallbackState.currentPlayerIndex !== playerIndex) return;
+    const discardTarget = (fallbackState.players[playerIndex]?.hand ?? []).find(c => !c.isWild);
+    if (!discardTarget) { dispatch({ type: 'ADVANCE_TURN' }); return; }
+
+    addLog(`p${playerIndex} fallback DISCARD ${discardTarget.rank}${discardTarget.suit[0]}`);
+    const postDiscardCount = fallbackState.discardsThisRound + 1;
+    dispatch({ type: 'DISCARD', card: discardTarget });
+    await sleep(AI_ACTION_DELAY_MS);
+    if (genRef.current !== gen) return;
+    await runBuyWindow(discardTarget, playerIndex, gen, postDiscardCount);
+    if (genRef.current !== gen) return;
+    dispatch({ type: 'ADVANCE_TURN' });
   }, [runBuyWindow, addLog]);
 
   // ─── Watch for AI turns ────────────────────────────────────────────────────
