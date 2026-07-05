@@ -26,7 +26,8 @@ type UIMode =
   | { type: 'wildPlacement'; selectedCard: CardType; targetPlayerIndex: number; targetComboIndex: number; combo: Combo };
 
 export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
-  const { state, buyOffer, lastAIAction, isHumanTurn, humanPlayerIndex, nextRound } = game;
+  const { state, buyOffer, lastAIAction, isHumanTurn, humanPlayerIndex, nextRound, debugLines } = game;
+  const [showDebug, setShowDebug] = useState(false);
 
   const [uiMode, setUIMode] = useState<UIMode>({ type: 'review' });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -277,6 +278,26 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
   return (
     <div className={styles.root}>
 
+      {/* ── Debug overlay (tap turn label 3× to show) ────────── */}
+      {showDebug && (
+        <div style={{
+          position:'fixed', top:0, left:0, right:0, zIndex:9999,
+          background:'rgba(0,0,0,0.92)', color:'#0f0', fontFamily:'monospace',
+          fontSize:'10px', padding:'8px', maxHeight:'50vh', overflowY:'auto',
+          whiteSpace:'pre-wrap', wordBreak:'break-all',
+        }}>
+          <button
+            onClick={() => setShowDebug(false)}
+            style={{float:'right', background:'red', color:'#fff', border:'none', padding:'2px 8px', fontSize:'12px', cursor:'pointer'}}
+          >✕</button>
+          <div style={{marginBottom:4, color:'#ff0', fontWeight:'bold'}}>AI Debug Log (last 50)</div>
+          {debugLines.map((line, i) => (
+            <div key={i} style={{color: line.startsWith('⚠') ? '#f66' : '#0f0'}}>{line}</div>
+          ))}
+        </div>
+      )}
+
+
       {/* ── Sidebar levels (desktop/iPad) ────────────────────── */}
       <aside className={styles.sidebar}>
         <LevelsReference
@@ -495,7 +516,10 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
             </span>
           </div>
           <div className={styles.turnInfo}>
-            <span className={isHumanTurn ? styles.myTurn : styles.theirTurn}>{turnLabel}</span>
+            <span
+              className={isHumanTurn ? styles.myTurn : styles.theirTurn}
+              onClick={() => setShowDebug(v => !v)}
+            >{turnLabel}</span>
             {!isHumanTurn && lastAIAction && (
               <span className={styles.aiActionLabel}>{lastAIAction}</span>
             )}
