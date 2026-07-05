@@ -366,16 +366,28 @@ export function chooseDiscard(
   if (discardable.length === 0) return null;
 
   if (hasLaidDown && state !== undefined && playerIndex !== undefined) {
+    const nextPlayerIndex = (playerIndex + 1) % state.players.length;
     const scored = discardable.map(card => {
       const remainingHand = hand.filter(c => c.id !== card.id);
+      // Prefer cards that keep our own buildable options high
+      const buildableLeft = countBuildableCards(remainingHand, state, playerIndex);
+      // Penalise cards that the next player can immediately build onto laid-down hands
+      const givesNextPlayerBuild = canBuildOnHand(state, card, nextPlayerIndex) ? 1 : 0;
       return {
         card,
-        buildableLeft: countBuildableCards(remainingHand, state, playerIndex),
+        buildableLeft,
+        givesNextPlayerBuild,
         rankValue: RANK_ORDER[card.rank],
       };
     });
 
-    scored.sort((a, b) => a.buildableLeft - b.buildableLeft || b.rankValue - a.rankValue);
+    // Sort: most buildable left first; break ties by not giving next player a free build;
+    // then discard highest-rank card as a last tiebreak.
+    scored.sort((a, b) =>
+      b.buildableLeft - a.buildableLeft ||
+      a.givesNextPlayerBuild - b.givesNextPlayerBuild ||
+      b.rankValue - a.rankValue,
+    );
     return scored[0].card;
   }
 
@@ -441,7 +453,19 @@ export function computeAITurn(state: GameState, playerIndex: number): GameAction
       ),
     };
     const plays = chooseBuildPlays(simulatedState, playerIndex);
-    for (const play of plays) {
+
+    // Always keep at least one non-wild card back so the AI can discard to end
+    // its turn (wilds cannot be discarded).  Trim plays from the end until the
+    // remaining hand contains a discardable card.
+    const keptPlays = [...plays];
+    while (keptPlays.length > 0) {
+      const playedIds = new Set(keptPlays.map(p => p.card.id));
+      const remaining = handAfterLayDown.filter(c => !playedIds.has(c.id));
+      if (remaining.some(c => !c.isWild)) break; // still has something to discard
+      keptPlays.pop();
+    }
+
+    for (const play of keptPlays) {
       actions.push({
         type: 'PLAY_ON_HAND',
         targetPlayerIndex: play.targetPlayerIndex,
@@ -451,7 +475,7 @@ export function computeAITurn(state: GameState, playerIndex: number): GameAction
       });
     }
     // Subtract played cards so the discard selection doesn't pick an already-played card
-    const playedIds = new Set(plays.map(p => p.card.id));
+    const playedIds = new Set(keptPlays.map(p => p.card.id));
     handAfterLayDown = handAfterLayDown.filter(c => !playedIds.has(c.id));
   }
 

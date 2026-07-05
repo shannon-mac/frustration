@@ -145,6 +145,8 @@ export function useGameState(): UseGameStateReturn {
     if (!player) return false;
 
     if (player.isHuman) {
+      // Don't offer the buy if the human has already laid down
+      if (player.laidDown !== null) return false;
       return new Promise<boolean>(resolve => {
         setBuyOffer({ card, offeredAt: Date.now(), discardingPlayerIndex });
         buyResolveRef.current = (bought: boolean) => {

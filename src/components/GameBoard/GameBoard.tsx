@@ -112,7 +112,7 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
   const canDraw = isHumanTurn && state.turnPhase === 'draw' && !isReview;
   const canAct  = isHumanTurn && state.turnPhase === 'action' && !isReview;
 
-  const canHumanBuy = !!buyOffer && state.discardsThisRound >= 2;
+  const canHumanBuy = !!buyOffer && state.discardsThisRound >= 2 && !human.laidDown;
   const canCallRummy = !!state.rummyPendingDiscard && state.currentPlayerIndex !== humanPlayerIndex && !!human.laidDown;
   const opponents = state.players.filter((_, i) => i !== humanPlayerIndex);
 
