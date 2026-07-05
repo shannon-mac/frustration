@@ -29,6 +29,8 @@ export interface UseGameStateReturn {
   // Human turn actions
   drawFromDeck: () => void;
   drawFromDiscard: () => void;
+  firstPlayerPeek: () => void;
+  firstPlayerKeep: () => void;
   firstPlayerRedraw: () => void;
   layDown: (combos: Combo[]) => void;
   playOnHand: (targetPlayerIndex: number, targetComboIndex: number, card: Card, wildToReplace?: Card) => void;
@@ -251,6 +253,14 @@ export function useGameState(): UseGameStateReturn {
     dispatch({ type: 'DRAW_FROM_DISCARD' });
   }, []);
 
+  const firstPlayerPeek = useCallback(() => {
+    dispatch({ type: 'FIRST_PLAYER_PEEK' });
+  }, []);
+
+  const firstPlayerKeep = useCallback(() => {
+    dispatch({ type: 'FIRST_PLAYER_KEEP' });
+  }, []);
+
   const firstPlayerRedraw = useCallback(() => {
     dispatch({ type: 'FIRST_PLAYER_DISCARD_AND_REDRAW' });
   }, []);
@@ -287,6 +297,8 @@ export function useGameState(): UseGameStateReturn {
     startGame,
     drawFromDeck,
     drawFromDiscard,
+    firstPlayerPeek,
+    firstPlayerKeep,
     firstPlayerRedraw,
     layDown,
     playOnHand,

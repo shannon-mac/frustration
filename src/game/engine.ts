@@ -188,28 +188,66 @@ function handleDrawFromDiscard(state: GameState): GameState {
 }
 
 /**
- * First-player special rule: discard the top deck card and draw the next one.
- * Only valid on the very first turn of the first player of the round (turnPhase = 'draw').
+ * First-player special rule step 1: draw the top deck card into hand so the
+ * player can see it. Enters the 'firstPeek' phase — the player must then either
+ * keep the card (DRAW_FROM_DECK transitions to 'action') or discard it and draw
+ * the next one (FIRST_PLAYER_DISCARD_AND_REDRAW).
  */
-function handleFirstPlayerDiscardAndRedraw(state: GameState): GameState {
+function handleFirstPlayerPeek(state: GameState): GameState {
+  if (state.turnPhase !== 'draw') return state;
   let s = ensureDeck(state);
-  if (s.deck.length === 0) return s;
-
-  const [discarded, ...afterFirstDraw] = s.deck;
-  const newDiscardPile = [discarded, ...s.discardPile];
-
-  // Increment discardsThisRound — this counts as a discard (no buying)
-  s = { ...s, deck: afterFirstDraw, discardPile: newDiscardPile, discardsThisRound: s.discardsThisRound + 1 };
-
-  // Now draw the next card
-  s = ensureDeck(s);
   if (s.deck.length === 0) return s;
 
   const [card, ...remainingDeck] = s.deck;
   const players = s.players.map((p, i) =>
     i === s.currentPlayerIndex ? { ...p, hand: [...p.hand, card] } : p,
   );
-  return { ...s, deck: remainingDeck, players, turnPhase: 'action', rummyPendingDiscard: null, rummyBlock: null };
+  return { ...s, deck: remainingDeck, players, turnPhase: 'firstPeek', rummyPendingDiscard: null, rummyBlock: null };
+}
+
+/**
+ * First-player special rule step 2a (optional): the player keeps the peeked
+ * card. Simply transitions from 'firstPeek' to 'action'.
+ */
+function handleFirstPlayerKeep(state: GameState): GameState {
+  if (state.turnPhase !== 'firstPeek') return state;
+  return { ...state, turnPhase: 'action' };
+}
+
+/**
+ * First-player special rule step 2b (optional): the player chose to discard the
+ * peeked card and draw the next one instead. Only valid from 'firstPeek' phase.
+ * The peeked card is identified as the last card added to the player's hand
+ * (guaranteed to be the peek card since no other action can happen between
+ * FIRST_PLAYER_PEEK and FIRST_PLAYER_DISCARD_AND_REDRAW).
+ */
+function handleFirstPlayerDiscardAndRedraw(state: GameState): GameState {
+  if (state.turnPhase !== 'firstPeek') return state;
+
+  const currentPlayer = state.players[state.currentPlayerIndex];
+  if (currentPlayer.hand.length === 0) return state;
+
+  // The peeked card is the last card in the player's hand
+  const peekedCard = currentPlayer.hand[currentPlayer.hand.length - 1];
+  const handWithoutPeeked = currentPlayer.hand.slice(0, -1);
+
+  const newDiscardPile = [peekedCard, ...state.discardPile];
+  const players = state.players.map((p, i) =>
+    i === state.currentPlayerIndex ? { ...p, hand: handWithoutPeeked } : p,
+  );
+
+  // Increment discardsThisRound — this counts as a discard (no buying on this discard)
+  let s: GameState = { ...state, players, discardPile: newDiscardPile, discardsThisRound: state.discardsThisRound + 1 };
+
+  // Now draw the next card
+  s = ensureDeck(s);
+  if (s.deck.length === 0) return { ...s, turnPhase: 'action' };
+
+  const [nextCard, ...remainingDeck] = s.deck;
+  const playersAfterDraw = s.players.map((p, i) =>
+    i === s.currentPlayerIndex ? { ...p, hand: [...p.hand, nextCard] } : p,
+  );
+  return { ...s, deck: remainingDeck, players: playersAfterDraw, turnPhase: 'action', rummyPendingDiscard: null, rummyBlock: null };
 }
 
 function handleBuy(state: GameState, buyerIndex: number): GameState {
@@ -420,6 +458,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'DRAW_FROM_DISCARD':
       return handleDrawFromDiscard(state);
+
+    case 'FIRST_PLAYER_PEEK':
+      return handleFirstPlayerPeek(state);
+
+    case 'FIRST_PLAYER_KEEP':
+      return handleFirstPlayerKeep(state);
 
     case 'FIRST_PLAYER_DISCARD_AND_REDRAW':
       return handleFirstPlayerDiscardAndRedraw(state);

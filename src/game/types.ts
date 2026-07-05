@@ -49,7 +49,7 @@ export interface RummyBlock {
 
 export type GamePhase = 'setup' | 'playing' | 'roundEnd' | 'gameOver';
 
-export type TurnPhase = 'draw' | 'action' | 'discard';
+export type TurnPhase = 'draw' | 'firstPeek' | 'action' | 'discard';
 
 // ─── Game State ───────────────────────────────────────────────────────────────
 
@@ -92,8 +92,25 @@ interface DrawFromDiscardAction {
 }
 
 /**
- * Special first-player rule: the first player of the round may look at the
- * top deck card, discard it if unwanted, and draw the next card instead.
+ * Special first-player rule: the first player of the round peeks at the top
+ * deck card by drawing it into their hand. They can then keep it (transition
+ * straight to 'action') or discard it and draw the next card instead.
+ */
+interface FirstPlayerPeekAction {
+  type: 'FIRST_PLAYER_PEEK';
+}
+
+/**
+ * Used after FIRST_PLAYER_PEEK: the player keeps the peeked card and proceeds
+ * to the action phase without drawing again.
+ */
+interface FirstPlayerKeepAction {
+  type: 'FIRST_PLAYER_KEEP';
+}
+
+/**
+ * Used after FIRST_PLAYER_PEEK: the player discards the peeked card and draws
+ * the next card from the deck.
  */
 interface FirstPlayerDiscardAndRedrawAction {
   type: 'FIRST_PLAYER_DISCARD_AND_REDRAW';
@@ -158,6 +175,8 @@ interface CallRummyAction {
 export type GameAction =
   | DrawFromDeckAction
   | DrawFromDiscardAction
+  | FirstPlayerPeekAction
+  | FirstPlayerKeepAction
   | FirstPlayerDiscardAndRedrawAction
   | BuyAction
   | LayDownAction

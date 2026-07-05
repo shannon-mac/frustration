@@ -5,6 +5,15 @@
   --pile-card-h: calc(90px * var(--pile-scale));   /* ~130px */
 }
 
+/* Smaller piles on narrow phones so the board fits without vertical scroll */
+@media (max-width: 479px) {
+  :root {
+    --pile-scale: 1.15;
+    --pile-card-w: calc(62px * var(--pile-scale));  /* ~71px */
+    --pile-card-h: calc(90px * var(--pile-scale));  /* ~104px */
+  }
+}
+
 .piles {
   display: flex;
   flex-direction: row;
@@ -13,6 +22,13 @@
   justify-content: center;
   width: 100%;
   padding: 8px 0;
+}
+
+@media (max-width: 479px) {
+  .piles {
+    gap: 24px;
+    padding: 4px 0;
+  }
 }
 
 .pileWrapper {

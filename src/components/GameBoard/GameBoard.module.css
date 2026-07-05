@@ -3,6 +3,7 @@
   display: flex;
   flex-direction: row;
   min-height: 100vh;
+  min-height: 100dvh;
   align-items: flex-start;
 }
 
@@ -31,6 +32,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
   gap: 8px;
   padding: 8px 8px 0;
   max-width: 700px;
@@ -38,6 +40,13 @@
   margin: 0 auto;
   box-sizing: border-box;
   padding-bottom: 0;
+}
+
+@media (max-width: 479px) {
+  .board {
+    gap: 5px;
+    padding: 4px 6px 0;
+  }
 }
 
 /* ─── Top bar ──────────────────────────────────────────────── */
@@ -48,6 +57,12 @@
   padding: 4px 2px 0;
   gap: 8px;
   flex-shrink: 0;
+}
+
+@media (max-width: 479px) {
+  .topBar {
+    padding: 2px 0 0;
+  }
 }
 
 .myLevel {
@@ -139,6 +154,12 @@
   flex-shrink: 0;
 }
 
+@media (max-width: 479px) {
+  .opponents {
+    gap: 4px;
+  }
+}
+
 /* ─── Central piles zone ───────────────────────────────────── */
 .centralZone {
   display: flex;
@@ -150,6 +171,14 @@
   border-top: 1px solid var(--border-soft);
   border-bottom: 1px solid var(--border-soft);
   flex-shrink: 0;
+  flex-wrap: wrap; /* buy bar wraps below piles on very narrow screens */
+}
+
+@media (max-width: 479px) {
+  .centralZone {
+    padding: 6px 0;
+    gap: 10px;
+  }
 }
 
 /* ─── Buy bar ──────────────────────────────────────────────── */
@@ -258,6 +287,12 @@
   box-shadow: var(--shadow-sm);
 }
 
+@media (max-width: 479px) {
+  .tableZone {
+    padding: 5px 8px;
+  }
+}
+
 .tableLabel {
   display: block;
   font-size: 10px;
@@ -302,6 +337,13 @@
   flex-shrink: 0;
 }
 
+@media (max-width: 479px) {
+  .actionBar {
+    min-height: 36px;
+    gap: 6px;
+  }
+}
+
 .actionBtn {
   padding: 10px 22px;
   background: var(--text);
@@ -316,6 +358,13 @@
   font-family: var(--font-body);
   white-space: nowrap;
   box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 479px) {
+  .actionBtn {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
 }
 .actionBtn:hover { opacity: 0.84; transform: scale(1.02); }
 .actionBtn:active { transform: scale(0.97); }
@@ -351,11 +400,21 @@
   margin-left: -8px;
   margin-right: -8px;
   padding: 8px 8px 12px;
+  /* Push content above the home-indicator bar on iPhones */
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
   border-top: 1px solid var(--border);
   background: rgba(245, 242, 238, 0.95);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   z-index: 10;
+}
+
+@media (max-width: 479px) {
+  .handArea {
+    margin-left: -6px;
+    margin-right: -6px;
+    padding: 6px 6px max(10px, env(safe-area-inset-bottom));
+  }
 }
 
 .handMeta {
@@ -364,6 +423,12 @@
   justify-content: space-between;
   padding: 0 16px 4px;
   gap: 4px;
+}
+
+@media (max-width: 479px) {
+  .handMeta {
+    padding: 0 8px 2px;
+  }
 }
 
 .sortControls {

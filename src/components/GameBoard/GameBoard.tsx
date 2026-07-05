@@ -96,6 +96,9 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
     state.discardsThisRound === 0 &&
     state.currentPlayerIndex === (state.dealerIndex + 1) % state.players.length;
 
+  // Whether the human is currently in the 'firstPeek' phase (deciding whether to keep the peeked card)
+  const isFirstPeek = isHumanTurn && state.turnPhase === 'firstPeek';
+
   // Auto-skip review when human is first to play in a round — nothing to review yet
   if (uiMode.type === 'review' && isFirstPlayerOfRound) {
     setUIMode({ type: 'idle' });
@@ -200,6 +203,7 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
   if (isHumanTurn) {
     if (isReview)                        turnLabel = 'Review your hand';
     else if (state.turnPhase === 'draw') turnLabel = 'Draw a card';
+    else if (isFirstPeek)                turnLabel = 'Keep this card or discard & draw again';
     else if (laidDownThisTurn)           turnLabel = 'Nice! Now discard to end your turn';
     else if (!human.laidDown)            turnLabel = 'Lay down, build, or discard';
     else                                 turnLabel = 'Build on hands or discard';
@@ -273,7 +277,7 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
           topDiscard={topDiscard}
           onDrawFromDeck={game.drawFromDeck}
           onDrawFromDiscard={game.drawFromDiscard}
-          onFirstPlayerRedraw={game.firstPlayerRedraw}
+          onFirstPlayerPeek={game.firstPlayerPeek}
           canDrawFromDeck={canDraw}
           canDrawFromDiscard={canDraw && state.discardsThisRound >= 2}
           showFirstPlayerOption={isFirstPlayerOfRound && !isReview}
@@ -345,6 +349,19 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
           <button className={styles.actionBtn} onClick={() => setUIMode({ type: 'idle' })}>
             Ready — Start Turn
           </button>
+        )}
+        {isFirstPeek && (
+          <>
+            <button className={styles.actionBtn} onClick={game.firstPlayerKeep}>
+              Keep this card
+            </button>
+            <button
+              className={`${styles.actionBtn} ${styles.cancelBtn}`}
+              onClick={game.firstPlayerRedraw}
+            >
+              Discard &amp; draw again
+            </button>
+          </>
         )}
         {showLayDown && (
           <button className={styles.actionBtn} onClick={() => setUIMode({ type: 'layDownModal' })}>

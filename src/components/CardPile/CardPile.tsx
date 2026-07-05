@@ -7,7 +7,7 @@ interface CardPileProps {
   topDiscard: CardType | null;
   onDrawFromDeck: () => void;
   onDrawFromDiscard: () => void;
-  onFirstPlayerRedraw?: () => void;
+  onFirstPlayerPeek?: () => void;
   canDrawFromDeck: boolean;
   canDrawFromDiscard: boolean;
   showFirstPlayerOption?: boolean;
@@ -18,7 +18,7 @@ export function CardPile({
   topDiscard,
   onDrawFromDeck,
   onDrawFromDiscard,
-  onFirstPlayerRedraw,
+  onFirstPlayerPeek,
   canDrawFromDeck,
   canDrawFromDiscard,
   showFirstPlayerOption,
@@ -41,9 +41,9 @@ export function CardPile({
           <span className={styles.badge}>{deckCount}</span>
         </div>
         <span className={styles.label}>Deck</span>
-        {showFirstPlayerOption && onFirstPlayerRedraw && (
-          <button className={styles.redrawBtn} onClick={onFirstPlayerRedraw}>
-            Peek & Redraw
+        {showFirstPlayerOption && onFirstPlayerPeek && (
+          <button className={styles.redrawBtn} onClick={onFirstPlayerPeek}>
+            Peek at first card
           </button>
         )}
       </div>

@@ -15,6 +15,13 @@
   box-shadow: var(--shadow-sm);
 }
 
+@media (max-width: 479px) {
+  .area {
+    padding: 5px 8px;
+    gap: 4px;
+  }
+}
+
 .area.active {
   border-color: var(--accent);
   background: var(--accent-soft);

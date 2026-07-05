@@ -64,10 +64,12 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
+  overflow-x: hidden; /* prevent any element causing horizontal page scroll */
 }
 
 #root {
   min-height: 100vh;
+  min-height: 100dvh; /* Safari: excludes collapsing toolbar */
 }
 
 /* Scrollbar */
