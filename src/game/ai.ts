@@ -1,5 +1,5 @@
 import { getHandSizeLimit } from './deck';
-import { LEVELS, RANK_ORDER, canAddToCombo, isValidRun, isValidSet, replaceWildInCombo, validateLayDownCardCount } from './rules';
+import { LEVELS, RANK_ORDER, canAddToCombo, isValidRun, isValidSet, validateLayDownCardCount } from './rules';
 import type { LevelDefinition } from './rules';
 import type { Card, Combo, GameAction, GameState, Player } from './types';
 
@@ -311,7 +311,7 @@ export function chooseBuildPlays(
   const plays: Array<{ card: Card; targetPlayerIndex: number; targetComboIndex: number; wildToReplace?: Card }> = [];
 
   for (const card of player.hand) {
-    if (card.isWild) continue; // save wilds for wild-displacement destinations
+    if (card.isWild) continue;
     for (let pi = 0; pi < state.players.length; pi++) {
       const target = state.players[pi];
       if (!target.laidDown) continue;
@@ -321,30 +321,13 @@ export function chooseBuildPlays(
           state.rummyBlock?.blockedPlayerIndex === playerIndex &&
           state.rummyBlock.discardedCardId === card.id;
         if (isBlockedBuild) break;
-        // Direct add (no wild displacement)
         if (canAddToCombo(combo, card)) {
           plays.push({ card, targetPlayerIndex: pi, targetComboIndex: ci });
           break; // one play per card
         }
-        // Wild displacement: try replacing each wild in this run/set
-        if (combo.type === 'run') {
-          const wilds = combo.cards.filter(c => c.isWild);
-          for (const wild of wilds) {
-            const result = replaceWildInCombo(combo, card, wild);
-            if (!result) continue;
-            // The displaced wild must have somewhere to go — find a valid destination
-            const wildCard = result.displacedWild;
-            const hasDestination = state.players.some(tp => {
-              if (!tp.laidDown) return false;
-              return tp.laidDown.combos.some(tc => canAddToCombo(tc, wildCard));
-            });
-            if (hasDestination) {
-              plays.push({ card, targetPlayerIndex: pi, targetComboIndex: ci, wildToReplace: wild });
-              break;
-            }
-          }
-        }
-        if (plays.some(p => p.card.id === card.id)) break;
+        // Wild displacement is intentionally skipped for AI: displacing a wild
+        // sets displacedWildPending which blocks discarding, and the AI has no
+        // logic to plan the follow-up re-placement in the same turn.
       }
       if (plays.some(p => p.card.id === card.id)) break;
     }
