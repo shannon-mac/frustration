@@ -26,7 +26,7 @@ type UIMode =
   | { type: 'wildPlacement'; selectedCard: CardType; targetPlayerIndex: number; targetComboIndex: number; combo: Combo };
 
 export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
-  const { state, buyOffer, lastAIAction, isHumanTurn, humanPlayerIndex } = game;
+  const { state, buyOffer, lastAIAction, isHumanTurn, humanPlayerIndex, nextRound } = game;
 
   const [uiMode, setUIMode] = useState<UIMode>({ type: 'review' });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -42,22 +42,20 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
   // Buy timer display
   const [buySecondsLeft, setBuySecondsLeft] = useState(0);
   const buyTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const prevStateRef = useRef(state);
 
-  // Detect round transition → show summary for the round that just ended, then review
-  if (state.roundNumber !== prevRound && !showRoundSummary) {
-    const previousState = prevStateRef.current;
+  if (state.gamePhase === 'roundEnd' && !showRoundSummary) {
     setRoundSummaryData({
-      roundNumber: previousState.roundNumber,
-      players: previousState.players,
+      roundNumber: state.roundNumber,
+      players: state.players,
     });
     setShowRoundSummary(true);
-    setPrevRound(state.roundNumber);
     setUIMode({ type: 'review' });
     setLaidDownThisTurn(false);
   }
 
-  prevStateRef.current = state;
+  if (state.roundNumber !== prevRound && state.gamePhase === 'playing') {
+    setPrevRound(state.roundNumber);
+  }
 
   // Keep handOrder in sync with the live hand:
   // cards removed (played/discarded) are dropped; newly drawn/bought cards are appended
@@ -530,13 +528,14 @@ export function GameBoard({ game, onPlayAgain }: GameBoardProps) {
           onCancel={() => setUIMode({ type: 'idle' })}
         />
       )}
-      {showRoundSummary && state.gamePhase === 'playing' && roundSummaryData && (
+      {showRoundSummary && state.gamePhase === 'roundEnd' && roundSummaryData && (
         <RoundSummary
           players={roundSummaryData.players}
           roundNumber={roundSummaryData.roundNumber}
           onContinue={() => {
             setShowRoundSummary(false);
             setRoundSummaryData(null);
+            nextRound();
           }}
         />
       )}

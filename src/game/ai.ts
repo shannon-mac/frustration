@@ -453,7 +453,10 @@ export function computeAITurn(state: GameState, playerIndex: number): GameAction
     state.rummyBlock?.blockedPlayerIndex === playerIndex &&
     state.rummyBlock.discardedCardId === topDiscard.id;
 
-  const shouldTakeDiscard = !!topDiscard && !topDiscard.isWild && (
+  // Cannot draw from the discard pile during the first 2 discards of the round
+  const canDrawFromDiscard = state.discardsThisRound >= 2;
+
+  const shouldTakeDiscard = canDrawFromDiscard && !!topDiscard && !topDiscard.isWild && (
     (player.laidDown === null && improvesLevelHand(player.hand, topDiscard, player)) ||
     (player.laidDown !== null && canBuildOnHand(state, topDiscard, playerIndex) && !topDiscardBlockedForBuild)
   );

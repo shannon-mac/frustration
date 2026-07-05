@@ -27,6 +27,7 @@ export interface UseGameStateReturn {
 
   // Setup
   startGame: (playerCount: number) => void;
+  nextRound: () => void;
 
   // Human turn actions
   drawFromDeck: () => void;
@@ -345,11 +346,16 @@ export function useGameState(): UseGameStateReturn {
     dispatch({ type: 'ADVANCE_TURN' });
   }, [runBuyWindow]);
 
+  const nextRound = useCallback(() => {
+    dispatch({ type: 'NEXT_ROUND' });
+  }, []);
+
   return {
     state,
     buyOffer,
     lastAIAction,
     startGame,
+    nextRound,
     drawFromDeck,
     drawFromDiscard,
     firstPlayerPeek,

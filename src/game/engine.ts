@@ -113,7 +113,7 @@ function checkAllLaidDown(state: GameState): GameState {
   if (state.players.length === 0) return state;
   const allDone = state.players.every(p => p.laidDown !== null);
   if (allDone) {
-    return endRound({ ...state, gamePhase: 'roundEnd' });
+    return { ...state, gamePhase: 'roundEnd' };
   }
   return state;
 }
@@ -180,6 +180,8 @@ function handleDrawFromDeck(state: GameState): GameState {
 }
 
 function handleDrawFromDiscard(state: GameState): GameState {
+  // Cannot pick up from the discard pile during the first 2 discards of the round
+  if (state.discardsThisRound < 2) return state;
   if (state.discardPile.length === 0) return state;
   const [card, ...remainingDiscard] = state.discardPile;
   const players = state.players.map((p, i) =>
@@ -430,7 +432,7 @@ function handleAdvanceTurn(state: GameState): GameState {
   const currentPlayer = state.players[state.currentPlayerIndex];
   if (currentPlayer.hand.length === 0) {
     // The discarding player went out — end the round
-    return endRound({ ...state, gamePhase: 'roundEnd' });
+    return { ...state, gamePhase: 'roundEnd' };
   }
 
   return nextPlayer({ ...state, rummyPendingDiscard: null, rummyBlock: null });
